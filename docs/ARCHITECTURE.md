@@ -86,7 +86,7 @@ sequenceDiagram
   S-->>UI: en marcha, o causa y acción
 
   UI->>S: stop
-  S->>S: mariadb-dump
+  S->>S: mariadb-dump si procede (ADR 0007)
   S->>A: dejar de escuchar y salir
   S->>P: cerrar el pool
   S->>M: mariadb-admin shutdown
@@ -206,6 +206,11 @@ Incluye:
 - Puertos altos. Sin `.test`, sin SSL, sin helper, sin IA, sin backup de proyectos con nombre. El `stop` de la única base sigue el [ADR 0007](adr/0007-backups.md): vuelca si no hay copia de menos de 24 horas o si hubo escrituras desde la última copia. En una carpeta de datos vacía, el primer `stop` sí vuelca.
 - Las DLL de Visual C++ redistribuibles, dentro de la carpeta del runtime. Sin administrador.
 
+Verificaciones de esta fase, además de la definición de hecho:
+
+- Qué hacen `mariadbd.exe` y `httpd.exe` ante `CTRL_SHUTDOWN_EVENT` y `CTRL_LOGOFF_EVENT`, y el margen real tras `WM_ENDSESSION` ([ADR 0011](adr/0011-apagado-del-sistema.md)).
+- El reciclado de `php-cgi` por `PHP_FCGI_MAX_REQUESTS` sale con código 0, y `mod_proxy_balancer` con `retry=1` no deja el miembro caído más de un segundo ([ADR 0005](adr/0005-proyectos-y-plantillas.md)).
+
 No incluye el diseño visual definitivo. La ventana tiene que entenderse; la prioridad visual llega en la fase 5.
 
 ### Fase 1b — Linux
@@ -247,6 +252,8 @@ La misma lista cierra la fase 1 en Windows x64, la fase 1b en Linux y la fase 1c
 3. Con el puerto ya ocupado por otro programa, `start` no lanza servidores. La respuesta nombra al ocupante y propone otro puerto.
 4. Cerrar la ventana deja los servidores en marcha. `stop` desde la CLI los apaga igual.
 5. Ningún paso pide administrador, no cambia el `PATH` y no escribe fuera de la carpeta de datos. En Windows las DLL de Visual C++ van dentro de la carpeta del runtime.
+
+6. En Windows, la prueba se ejecuta en Windows Sandbox: una máquina limpia, sin el redistribuible de Visual C++ instalado. `httpd.exe`, `php-cgi.exe` y `mariadbd.exe` arrancan desde la carpeta del runtime.
 
 Sin esa prueba, la fase de ese sistema no está hecha. El CI puede estar en verde en los tres sistemas antes de que Linux o macOS cumplan esta lista.
 

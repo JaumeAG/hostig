@@ -86,8 +86,20 @@ impl Client {
     }
 }
 
+fn map_connect_error(error: std::io::Error) -> ClientError {
+    if error.kind() == std::io::ErrorKind::PermissionDenied {
+        ClientError::Rejected {
+            message: "extremo remoto no confiable".into(),
+            cause: error.to_string(),
+            action: "arranca el supervisor con tu usuario o elimina un socket/pipe ajeno".into(),
+        }
+    } else {
+        ClientError::Io(error)
+    }
+}
+
 fn call(layout: &Layout, token: &str, protocol: u32, method: &str) -> Result<Vec<u8>, ClientError> {
-    let mut stream = connect_raw(layout)?;
+    let mut stream = connect_raw(layout).map_err(map_connect_error)?;
     write_frame(
         &mut stream,
         &protocol::request(

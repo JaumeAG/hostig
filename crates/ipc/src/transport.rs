@@ -3,6 +3,8 @@ use std::io::{Read, Write};
 
 pub trait ByteStream: Read + Write + Send {
     fn try_clone(&self) -> std::io::Result<Box<dyn ByteStream>>;
+    /// Desbloquea lecturas pendientes (timeout o apagado).
+    fn interrupt(&mut self) -> std::io::Result<()>;
 }
 
 pub struct Accepted {
@@ -18,7 +20,26 @@ enum ListenerInner {
     #[cfg(unix)]
     Unix(std::os::unix::net::UnixListener),
     #[cfg(windows)]
-    Pipe { name: String, sddl: String },
+    Pipe {
+        name: String,
+        sddl: String,
+        /// Primera instancia ya reclamada (HANDLE como isize).
+        pending: std::sync::Mutex<Option<isize>>,
+    },
+}
+
+impl Drop for Listener {
+    fn drop(&mut self) {
+        #[cfg(windows)]
+        {
+            let ListenerInner::Pipe { pending, .. } = &self.inner;
+            if let Ok(mut guard) = pending.lock() {
+                if let Some(raw) = guard.take() {
+                    windows::close_raw_handle(raw);
+                }
+            }
+        }
+    }
 }
 
 impl Listener {
@@ -27,7 +48,11 @@ impl Listener {
             #[cfg(unix)]
             ListenerInner::Unix(listener) => unix::accept(listener),
             #[cfg(windows)]
-            ListenerInner::Pipe { name, sddl } => windows::accept(name, sddl),
+            ListenerInner::Pipe {
+                name,
+                sddl,
+                pending,
+            } => windows::accept(name, sddl, pending),
         }
     }
 }
@@ -54,10 +79,12 @@ pub fn listen(layout: &Layout) -> std::io::Result<Listener> {
             #[cfg(windows)]
             {
                 let sddl = crate::peer::pipe_sddl()?;
+                let first = windows::create_pipe(name, &sddl, true)?;
                 Ok(Listener {
                     inner: ListenerInner::Pipe {
                         name: name.clone(),
                         sddl,
+                        pending: std::sync::Mutex::new(Some(windows::handle_to_raw(first))),
                     },
                 })
             }
@@ -78,6 +105,7 @@ pub fn connect(layout: &Layout) -> std::io::Result<Box<dyn ByteStream>> {
         Endpoint::Unix(path) => {
             #[cfg(unix)]
             {
+                unix::verify_socket_owner(path)?;
                 Ok(Box::new(std::os::unix::net::UnixStream::connect(path)?))
             }
             #[cfg(not(unix))]
@@ -89,7 +117,9 @@ pub fn connect(layout: &Layout) -> std::io::Result<Box<dyn ByteStream>> {
         Endpoint::Pipe(name) => {
             #[cfg(windows)]
             {
-                Ok(Box::new(windows::connect(name)?))
+                let stream = windows::connect(name)?;
+                windows::verify_server_is_current_user(&stream)?;
+                Ok(Box::new(stream))
             }
             #[cfg(not(windows))]
             {
@@ -103,8 +133,9 @@ pub fn connect(layout: &Layout) -> std::io::Result<Box<dyn ByteStream>> {
 #[cfg(unix)]
 mod unix {
     use super::{Accepted, ByteStream};
+    use std::os::unix::fs::MetadataExt;
     use std::os::unix::fs::PermissionsExt;
-    use std::os::unix::net::UnixListener;
+    use std::os::unix::net::{UnixListener, UnixStream};
     use std::path::Path;
 
     pub fn bind(path: &Path) -> std::io::Result<UnixListener> {
@@ -113,7 +144,7 @@ mod unix {
             std::fs::set_permissions(parent, std::fs::Permissions::from_mode(0o700))?;
         }
         if path.exists() {
-            match std::os::unix::net::UnixStream::connect(path) {
+            match UnixStream::connect(path) {
                 Ok(_) => {
                     return Err(std::io::Error::new(
                         std::io::ErrorKind::AddrInUse,
@@ -130,9 +161,41 @@ mod unix {
         Ok(listener)
     }
 
-    impl super::ByteStream for std::os::unix::net::UnixStream {
-        fn try_clone(&self) -> std::io::Result<Box<dyn super::ByteStream>> {
-            Ok(Box::new(std::os::unix::net::UnixStream::try_clone(self)?))
+    pub fn verify_socket_owner(path: &Path) -> std::io::Result<()> {
+        let uid = nix::unistd::Uid::effective().as_raw();
+        let sock = std::fs::metadata(path)?;
+        if sock.uid() != uid {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                format!(
+                    "el socket pertenece al uid {} y este proceso al {uid}",
+                    sock.uid()
+                ),
+            ));
+        }
+        if let Some(parent) = path.parent() {
+            let dir = std::fs::metadata(parent)?;
+            if dir.uid() != uid {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    format!(
+                        "el directorio del socket pertenece al uid {} y este proceso al {uid}",
+                        dir.uid()
+                    ),
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    impl ByteStream for UnixStream {
+        fn try_clone(&self) -> std::io::Result<Box<dyn ByteStream>> {
+            Ok(Box::new(UnixStream::try_clone(self)?))
+        }
+        fn interrupt(&mut self) -> std::io::Result<()> {
+            use std::net::Shutdown;
+            let _ = self.shutdown(Shutdown::Both);
+            Ok(())
         }
     }
 
@@ -145,7 +208,7 @@ mod unix {
         })
     }
 
-    fn peer_is_current_user(stream: &std::os::unix::net::UnixStream) -> std::io::Result<bool> {
+    fn peer_is_current_user(stream: &UnixStream) -> std::io::Result<bool> {
         #[cfg(target_os = "linux")]
         {
             let creds =
@@ -173,27 +236,28 @@ mod unix {
         }
     }
 }
-
 #[cfg(windows)]
 mod windows {
     use super::Accepted;
     use std::io::{Read, Write};
+    use std::time::Duration;
     use windows::core::PCWSTR;
     use windows::Win32::Foundation::{
-        CloseHandle, LocalFree, ERROR_PIPE_BUSY, ERROR_PIPE_CONNECTED, HANDLE, HLOCAL,
-        INVALID_HANDLE_VALUE,
+        CloseHandle, LocalFree, ERROR_ACCESS_DENIED, ERROR_PIPE_BUSY, ERROR_PIPE_CONNECTED, HANDLE,
+        HLOCAL, INVALID_HANDLE_VALUE,
     };
     use windows::Win32::Security::Authorization::{
         ConvertStringSecurityDescriptorToSecurityDescriptorW, SDDL_REVISION_1,
     };
     use windows::Win32::Security::{PSECURITY_DESCRIPTOR, SECURITY_ATTRIBUTES};
     use windows::Win32::Storage::FileSystem::{
-        CreateFileW, ReadFile, WriteFile, FILE_ATTRIBUTE_NORMAL, FILE_GENERIC_READ,
-        FILE_GENERIC_WRITE, FILE_SHARE_NONE, OPEN_EXISTING, PIPE_ACCESS_DUPLEX,
+        CreateFileW, ReadFile, WriteFile, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_FIRST_PIPE_INSTANCE,
+        FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_SHARE_NONE, OPEN_EXISTING, PIPE_ACCESS_DUPLEX,
     };
     use windows::Win32::System::Pipes::{
         ConnectNamedPipe, CreateNamedPipeW, DisconnectNamedPipe, GetNamedPipeClientProcessId,
-        PIPE_READMODE_BYTE, PIPE_REJECT_REMOTE_CLIENTS, PIPE_TYPE_BYTE, PIPE_UNLIMITED_INSTANCES,
+        GetNamedPipeServerProcessId, PIPE_READMODE_BYTE, PIPE_REJECT_REMOTE_CLIENTS,
+        PIPE_TYPE_BYTE, PIPE_UNLIMITED_INSTANCES,
     };
 
     pub struct PipeStream {
@@ -221,10 +285,24 @@ mod windows {
                 )
                 .map_err(io_err)?;
             }
+            // Conserva server=true para que interrupt() pueda DisconnectNamedPipe.
             Ok(Box::new(PipeStream {
                 handle: copied,
                 server: self.server,
             }))
+        }
+
+        fn interrupt(&mut self) -> std::io::Result<()> {
+            unsafe {
+                if self.server {
+                    let _ = DisconnectNamedPipe(self.handle);
+                } else {
+                    // Cancelar I/O pendiente en este handle.
+                    use windows::Win32::System::IO::CancelIoEx;
+                    let _ = CancelIoEx(self.handle, None);
+                }
+            }
+            Ok(())
         }
     }
 
@@ -278,8 +356,46 @@ mod windows {
         }
     }
 
-    pub fn accept(name: &str, sddl: &str) -> std::io::Result<Accepted> {
-        let handle = create_pipe(name, sddl)?;
+    pub fn handle_to_raw(handle: HANDLE) -> isize {
+        handle.0 as isize
+    }
+
+    pub fn close_raw_handle(raw: isize) {
+        unsafe {
+            let _ = CloseHandle(HANDLE(raw as *mut _));
+        }
+    }
+
+    pub fn accept(
+        name: &str,
+        sddl: &str,
+        pending: &std::sync::Mutex<Option<isize>>,
+    ) -> std::io::Result<Accepted> {
+        let handle = {
+            let mut guard = pending
+                .lock()
+                .map_err(|_| std::io::Error::other("el candado del pipe está envenenado"))?;
+            match guard.take() {
+                Some(raw) => HANDLE(raw as *mut _),
+                None => create_pipe(name, sddl, false)?,
+            }
+        };
+        // Deja otra instancia lista antes de bloquear: así un segundo cliente
+        // no encuentra el pipe "inexistente" mientras ConnectNamedPipe espera.
+        {
+            let mut guard = pending
+                .lock()
+                .map_err(|_| std::io::Error::other("el candado del pipe está envenenado"))?;
+            if guard.is_none() {
+                match create_pipe(name, sddl, false) {
+                    Ok(next) => *guard = Some(handle_to_raw(next)),
+                    Err(error) => {
+                        // Sin reserva: seguimos; el siguiente accept la creará.
+                        let _ = error;
+                    }
+                }
+            }
+        }
         unsafe {
             if let Err(error) = ConnectNamedPipe(handle, None) {
                 if error.code() != ERROR_PIPE_CONNECTED.into() {
@@ -321,7 +437,7 @@ mod windows {
                     })
                 }
                 Err(error) if error.code() == ERROR_PIPE_BUSY.into() => {
-                    std::thread::sleep(std::time::Duration::from_millis(50));
+                    std::thread::sleep(Duration::from_millis(50));
                     last = io_err(error);
                 }
                 Err(error) => return Err(io_err(error)),
@@ -330,7 +446,35 @@ mod windows {
         Err(last)
     }
 
-    fn create_pipe(name: &str, sddl: &str) -> std::io::Result<HANDLE> {
+    pub fn verify_server_is_current_user(stream: &PipeStream) -> std::io::Result<()> {
+        let mut pid = 0u32;
+        unsafe {
+            GetNamedPipeServerProcessId(stream.handle, &mut pid).map_err(io_err)?;
+        }
+        if pid == 0 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "no se pudo obtener el pid del servidor del pipe",
+            ));
+        }
+        let server = crate::peer::process_user_sid(pid)?;
+        let current = crate::peer::current_user_sid()?;
+        if server != current {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                format!(
+                    "el servidor del pipe (pid {pid}) pertenece a {server} y este proceso a {current}"
+                ),
+            ));
+        }
+        Ok(())
+    }
+
+    pub(super) fn create_pipe(
+        name: &str,
+        sddl: &str,
+        first_instance: bool,
+    ) -> std::io::Result<HANDLE> {
         let descriptor = security_descriptor(sddl)?;
         let attributes = SECURITY_ATTRIBUTES {
             nLength: std::mem::size_of::<SECURITY_ATTRIBUTES>() as u32,
@@ -338,10 +482,14 @@ mod windows {
             bInheritHandle: false.into(),
         };
         let wide = wide(name);
+        let mut open_mode = PIPE_ACCESS_DUPLEX;
+        if first_instance {
+            open_mode |= FILE_FLAG_FIRST_PIPE_INSTANCE;
+        }
         let handle = unsafe {
             CreateNamedPipeW(
                 PCWSTR(wide.as_ptr()),
-                PIPE_ACCESS_DUPLEX,
+                open_mode,
                 PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_REJECT_REMOTE_CLIENTS,
                 PIPE_UNLIMITED_INSTANCES,
                 64 * 1024,
@@ -354,10 +502,17 @@ mod windows {
             let _ = LocalFree(Some(HLOCAL(descriptor.0 .0)));
         }
         if handle.is_invalid() || handle == INVALID_HANDLE_VALUE {
-            Err(std::io::Error::last_os_error())
-        } else {
-            Ok(handle)
+            let error = std::io::Error::last_os_error();
+            if first_instance {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::AddrInUse,
+                    format!("no se pudo reclamar el named pipe (¿otro proceso lo ocupa?): {error}"),
+                ));
+            }
+            return Err(error);
         }
+        let _ = ERROR_ACCESS_DENIED;
+        Ok(handle)
     }
 
     struct Descriptor(PSECURITY_DESCRIPTOR);
@@ -441,5 +596,19 @@ mod tests {
             .expect("el transporte local no completó el intercambio");
         client.join().unwrap();
         server.join().unwrap();
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn la_primera_instancia_del_pipe_no_se_puede_duplicar() {
+        let dir = tempfile::tempdir().unwrap();
+        let layout = Layout::from_dir(dir.path());
+        layout.ensure().unwrap();
+        let _first = listen(&layout).expect("listener legítimo");
+        let err = match listen(&layout) {
+            Ok(_) => panic!("el segundo listen debe fallar"),
+            Err(error) => error,
+        };
+        assert_eq!(err.kind(), std::io::ErrorKind::AddrInUse);
     }
 }

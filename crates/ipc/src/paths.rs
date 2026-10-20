@@ -120,8 +120,9 @@ fn production_runtime_dir(data_dir: &Path) -> PathBuf {
 }
 
 fn pipe_name(data_dir: &Path, isolated: bool) -> String {
+    let sid = current_user_sid_for_pipe();
     if !isolated {
-        return r"\\.\pipe\hostig\supervisor".to_string();
+        return format!(r"\\.\pipe\hostig\{sid}\supervisor");
     }
     let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
     let text = data_dir.to_string_lossy();
@@ -129,7 +130,18 @@ fn pipe_name(data_dir: &Path, isolated: bool) -> String {
         hash ^= u64::from(byte);
         hash = hash.wrapping_mul(0x1000_0000_01b3);
     }
-    format!(r"\\.\pipe\hostig\i{hash:016x}")
+    format!(r"\\.\pipe\hostig\{sid}\i{hash:016x}")
+}
+
+fn current_user_sid_for_pipe() -> String {
+    #[cfg(windows)]
+    {
+        crate::peer::current_user_sid().unwrap_or_else(|_| "unknown".to_string())
+    }
+    #[cfg(not(windows))]
+    {
+        "unix".to_string()
+    }
 }
 
 #[cfg(not(windows))]
@@ -191,8 +203,14 @@ mod tests {
                 assert_eq!(path, &dir.join("run").join("supervisor.sock"));
             }
             Endpoint::Pipe(name) => {
-                assert!(name.starts_with(r"\\.\pipe\hostig\i"));
-                assert_ne!(name, r"\\.\pipe\hostig\supervisor");
+                assert!(name.starts_with(r"\\.\pipe\hostig"));
+                assert!(name.contains("\\i") || name.contains("/i"));
+                assert!(!name.ends_with(r"hostig\supervisor"));
+                #[cfg(windows)]
+                {
+                    let sid = crate::peer::current_user_sid().unwrap();
+                    assert!(name.contains(&sid), "{name} debe incluir el SID");
+                }
             }
         }
         let real = default_data_dir().unwrap();
@@ -217,5 +235,19 @@ mod tests {
         assert!(path.ends_with("Hostig"));
         #[cfg(all(unix, not(target_os = "macos")))]
         assert!(path.ends_with("hostig"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn el_pipe_de_produccion_incluye_el_sid() {
+        let dir = default_data_dir().unwrap();
+        let layout = build(dir, false);
+        let sid = crate::peer::current_user_sid().unwrap();
+        match layout.endpoint {
+            Endpoint::Pipe(name) => {
+                assert_eq!(name, format!(r"\\.\pipe\hostig\{sid}\supervisor"));
+            }
+            Endpoint::Unix(_) => panic!("Windows debe usar pipe"),
+        }
     }
 }

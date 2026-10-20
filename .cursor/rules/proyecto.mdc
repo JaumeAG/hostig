@@ -1,0 +1,46 @@
+---
+description: Reglas permanentes de BITXMP — pruebas, módulos aislados, sistema, logs y REA
+alwaysApply: true
+---
+
+# BITXMP
+
+Gestor local de entornos de desarrollo (sustituto de XAMPP). Prioridad: estabilidad, bajo consumo, UI clara/oscura y varias versiones de PHP y MySQL/MariaDB por proyecto.
+
+## 1. Nada termina sin pruebas
+
+Un cambio no está hecho hasta que una prueba lo verifica: test automatizado, o comando reproducible cuyo resultado se comprueba.
+
+```text
+# Mal: "el apagado ya funciona"
+# Bien: test que arranca el proceso, pide stop y afirma que el puerto quedó libre y el log dice shutdown limpio
+```
+
+## 2. Módulos aislados
+
+Procesos, puertos, versiones, configuración y UI no se mezclan. Cada uno expone una interfaz pequeña; el resto depende de esa interfaz, no de sus internos.
+
+```text
+# Mal: la UI mata un PID y edita my.ini
+# Bien: UI llama a ProcessSupervisor.stop(id); el supervisor cierra la base y libera el puerto
+```
+
+## 3. Configuración global del sistema
+
+No modificar PATH, servicios de Windows, hosts, puertos del sistema ni archivos fuera del proyecto sin confirmación explícita del usuario en ese momento.
+
+## 4. Errores en log estructurado
+
+Todo error se registra con causa y acción sugerida. No tragar excepciones.
+
+```json
+{"level":"error","module":"ports","cause":"port 3306 already bound","action":"elegir otro puerto o detener el proceso que lo ocupa","error":"..."}
+```
+
+## 5. REA y software de terceros
+
+Al analizar binarios o paquetes ajenos con REA, escribir los hallazgos en `/docs/research`. No copiar código propietario al repositorio; documentar comportamiento, interfaces y límites.
+
+## 6. Codificación
+
+Todo archivo de texto se escribe en UTF-8 sin BOM con LF.

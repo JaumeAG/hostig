@@ -1,0 +1,1018 @@
+84428	utf16	MSH_WHEELSUPPORT_MSG
+87376	utf16	QueryWorkingSet
+1000080	utf16	claSeashell
+1073344	utf16	MS Shell Dlg 2
+2146984	utf16	C:\xampp\src\xampp-control-panel\gnugettext.pas
+2166564	utf16	C:\xampp\src\xampp-control-panel\gnugettext.pas
+2166936	utf16	C:\xampp\src\xampp-control-panel\gnugettext.pas
+2168256	utf16	C:\xampp\src\xampp-control-panel\gnugettext.pas
+2168556	utf16	C:\xampp\src\xampp-control-panel\gnugettext.pas
+2213064	utf16	QueryFullProcessImageNameW
+2213172	utf16	QueryFullProcessImageName
+2216596	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\common\JclFileUtils.pas
+2220152	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\common\JclSysUtils.pas
+2221116	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\common\JclSysUtils.pas
+2239912	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\common\JclStrings.pas
+2251136	utf16	Apache
+2251376	utf16	CheckDefaultPorts
+2251500	utf16	EnableServices
+2251544	utf16	httpd.exe
+2251612	utf16	mysqld.exe
+2251776	utf16	FileZillaAdmin
+2251892	utf16	Apache2.4
+2251924	utf16	ServiceNames
+2252032	utf16	ServicePorts
+2252072	utf16	ApacheSSL
+2255136	utf16	Apache
+2255376	utf16	CheckDefaultPorts
+2255500	utf16	EnableServices
+2255580	utf16	FileZillaAdmin
+2255624	utf16	ServiceNames
+2255664	utf16	ServicePorts
+2255704	utf16	ApacheSSL
+2256404	utf16	EXCEPTION: Problem terminating PID %d
+2259496	utf16	EXCEPTION: Problem shell executing %s
+2260064	utf16	EXCEPTION: Problem running as admin %s
+2262024	utf16	ERROR: Not Able To Open Service Manager
+2262116	utf16	ERROR: Service Not Found
+2262180	utf16	ERROR: Could Not Get Service Config
+2262688	utf16	ServicesActive
+2262732	utf16	Unable to open Service Control Manager
+2262824	utf16	Unable to query service
+2262884	utf16	Unable to open service: %s
+2265896	utf16	QueryFullProcessImageNameW
+2267248	utf16	NetStatTable
+2268720	utf16	NetStat TCP service stopped. Please restart the control panel. Returned %d
+2268884	utf16	NetStatTable
+2271280	utf16	Service installed
+2271328	utf16	Service not installed
+2271384	utf16	Checking for service (name="%s"): %s
+2271508	utf16	Service Path: %s
+2271556	utf16	%s Service detected with wrong path
+2271668	utf16	Change XAMPP %s and Control Panel settings or
+2271772	utf16	Uninstall/disable the other service manually first
+2272024	utf16	Service Path: Service Not Installed
+2273140	utf16	catalina_start.bat
+2273192	utf16	catalina_stop.bat
+2273240	utf16	catalina_service.bat
+2273508	utf16	Run this program from your XAMPP root directory!
+2273620	utf16	%s Service is disabled.
+2273756	utf16	Problem detected: Required Tool catalina_start.bat Not Found!
+2273892	utf16	Problem detected: Required Tool catalina_stop.bat Not Found!
+2274028	utf16	Problem detected: Required Tool catalina_service.bat Not Found!
+2275796	utf16	Checking default ports...
+2275860	utf16	Portblocker Detected: %s
+2275980	utf16	Checking for Service: %s
+2276044	utf16	Portblocker Path: %s
+2276100	utf16	Portblocker Service Path: %s
+2276236	utf16	Java is already running on port %d!
+2276408	utf16	XAMPP %s is already running on port %d
+2276500	utf16	XAMPP %s Service is already running on port %d
+2276656	utf16	Port %d in use by "%s"!
+2276716	utf16	%s WILL NOT start without the configured ports free!
+2276984	utf16	or reconfigure %s and the Control Panel to listen on a different port
+2277620	utf16	catalina_service.bat" install 
+2277696	utf16	c:\Windows\sysnative\cmd.exe
+2277788	utf16	Installing service...
+2277940	utf16	%s Service Install stopped with errors, return code: %d
+2278092	utf16	Make sure you have Java JDK or JRE installed and the required ports are free
+2278260	utf16	Check the "/xampp/tomcat/logs" folder for more information
+2278876	utf16	catalina_service.bat" remove 
+2278948	utf16	c:\Windows\sysnative\cmd.exe
+2279040	utf16	Uninstalling service...
+2279196	utf16	%s Service Uninstall stopped with errors, return code: %d
+2279352	utf16	Make sure you have Java JDK or JRE installed and the required ports are free
+2279520	utf16	Check the "/xampp/tomcat/logs" folder for more information
+2280588	utf16	Attempting to start %s service...
+2281060	utf16	catalina_start.bat"
+2281112	utf16	c:\Windows\sysnative\cmd.exe
+2281388	utf16	Make sure you have Java JDK or JRE installed and the required ports are free
+2281556	utf16	Check the "/xampp/tomcat/logs" folder for more information
+2282408	utf16	Attempting to stop %s service...
+2282860	utf16	catalina_stop.bat"
+2282912	utf16	c:\Windows\sysnative\cmd.exe
+2284648	utf16	Error: %s shutdown unexpectedly.
+2284756	utf16	This may be due to a blocked port, missing dependencies, 
+2284884	utf16	improper privileges, a crash, or a shutdown by another method.
+2286700	utf16	Apache
+2288008	utf16	Service installed
+2288056	utf16	Service not installed
+2288112	utf16	Checking for service (name="%s"): %s
+2288200	utf16	apache\bin\
+2288236	utf16	Service Path: %s
+2288284	utf16	%s Service detected with wrong path
+2288368	utf16	Apache
+2288396	utf16	Change XAMPP %s and Control Panel settings or
+2288500	utf16	Uninstall/disable the other service manually first
+2288660	utf16	Expected Path: "%sapache\bin\%s" -k runservice
+2288768	utf16	Service Path: Service Not Installed
+2289464	utf16	Apache
+2289584	utf16	apache\bin\
+2289832	utf16	Run this program from your XAMPP root directory!
+2289944	utf16	%s Service is disabled.
+2291416	utf16	apache\bin\
+2291452	utf16	Checking default ports...
+2291516	utf16	Portblocker Detected: %s
+2291636	utf16	Checking for Service: %s
+2291700	utf16	Portblocker Path: %s
+2291756	utf16	Portblocker Service Path: %s
+2291828	utf16	XAMPP %s is already running on port %d
+2291920	utf16	Apache
+2291948	utf16	XAMPP %s Service is already running on port %d
+2292104	utf16	Port %d in use by "%s" with PID %d!
+2292188	utf16	%s WILL NOT start without the configured ports free!
+2292456	utf16	or reconfigure %s and the Control Panel to listen on a different port
+2293024	utf16	apache\bin\
+2293120	utf16	Installing service...
+2293784	utf16	apache\bin\
+2293884	utf16	Uninstalling service...
+2294972	utf16	Attempting to start %s service...
+2295052	utf16	Apache
+2295420	utf16	apache\bin\
+2296240	utf16	Attempting to stop %s service...
+2296320	utf16	Apache
+2296680	utf16	(PID: %d)
+2296712	utf16	Problem killing PID %d
+2296868	utf16	No PIDs found?!
+2299032	utf16	Error: %s shutdown unexpectedly.
+2299112	utf16	Apache
+2299140	utf16	This may be due to a blocked port, missing dependencies, 
+2299268	utf16	improper privileges, a crash, or a shutdown by another method.
+2301424	utf16	http://localhost/phpmyadmin/
+2301544	utf16	/phpmyadmin
+2302424	utf16	Service installed
+2302472	utf16	Service not installed
+2302528	utf16	Checking for service (name="%s"): %s
+2302616	utf16	mysql\bin\
+2302652	utf16	Service Path: %s
+2302700	utf16	%s Service detected with wrong path
+2302808	utf16	Change XAMPP %s and Control Panel settings or
+2302912	utf16	Uninstall/disable the other service manually first
+2303072	utf16	Expected Path: %smysql\bin\%s --defaults-file=%smysql\bin\my.ini %s
+2303220	utf16	Service Path: Service Not Installed
+2304028	utf16	mysql\bin\
+2304276	utf16	Run this program from your XAMPP root directory!
+2304388	utf16	%s Service is disabled.
+2305716	utf16	mysql\bin\
+2305752	utf16	Checking default ports...
+2305816	utf16	Portblocker Detected: %s
+2305936	utf16	Checking for Service: %s
+2306000	utf16	Portblocker Path: %s
+2306056	utf16	Portblocker Service Path: %s
+2306128	utf16	XAMPP %s is already running on port %d
+2306244	utf16	XAMPP %s Service is already running on port %d
+2306400	utf16	Port %d in use by "%s"!
+2306460	utf16	%s WILL NOT start without the configured ports free!
+2306728	utf16	or reconfigure %s and the Control Panel to listen on a different port
+2307324	utf16	mysql\bin\
+2307448	utf16	mysql\bin\my.ini"
+2307496	utf16	Installing service...
+2308136	utf16	mysql\bin\
+2308224	utf16	Uninstalling service...
+2309280	utf16	Attempting to start %s service...
+2309740	utf16	mysql\bin\
+2309828	utf16	mysql\bin\my.ini" --standalone
+2310628	utf16	Attempting to stop %s service...
+2311068	utf16	No PIDs found?!
+2312872	utf16	Error: %s shutdown unexpectedly.
+2312976	utf16	This may be due to a blocked port, missing dependencies, 
+2313104	utf16	improper privileges, a crash, or a shutdown by another method.
+2315928	utf16	Service installed
+2315976	utf16	Service not installed
+2316032	utf16	Checking for service (name="%s"): %s
+2316160	utf16	Service Path: %s
+2316208	utf16	%s Service detected with wrong path
+2316324	utf16	Change XAMPP %s and Control Panel settings or
+2316428	utf16	Uninstall/disable the other service manually first
+2316672	utf16	Service Path: Service Not Installed
+2318000	utf16	Run this program from your XAMPP root directory!
+2318112	utf16	%s Service is disabled.
+2319580	utf16	Checking default ports...
+2319644	utf16	Portblocker Detected: %s
+2319764	utf16	Checking for Service: %s
+2319828	utf16	Portblocker Path: %s
+2319884	utf16	Portblocker Service Path: %s
+2319956	utf16	XAMPP %s is already running on port %d
+2320080	utf16	XAMPP %s Service is already running on port %d
+2320236	utf16	Port %d in use by "%s"!
+2320296	utf16	%s WILL NOT start without the configured ports free!
+2320564	utf16	or reconfigure %s and the Control Panel to listen on a different port
+2321464	utf16	-servicename 
+2321504	utf16	-servicedisplayname 
+2321560	utf16	Setting Service Name...
+2321668	utf16	Setting Service Display Name...
+2321744	utf16	Installing service...
+2322396	utf16	Uninstalling service...
+2323456	utf16	Attempting to start %s service...
+2324788	utf16	Attempting to stop %s service...
+2327312	utf16	Error: %s shutdown unexpectedly.
+2327424	utf16	This may be due to a blocked port, missing dependencies, 
+2327552	utf16	improper privileges, a crash, or a shutdown by another method.
+2330508	utf16	Run this program from your XAMPP root directory!
+2331860	utf16	Checking default ports...
+2331924	utf16	Portblocker Detected: %s
+2332044	utf16	Portblocker Path: %s
+2332100	utf16	Portblocker Service Path: %s
+2332172	utf16	XAMPP %s is already running on port %d
+2332340	utf16	Port %d in use by "%s" with PID %d!
+2332424	utf16	%s WILL NOT start without the configured ports free!
+2332692	utf16	or reconfigure %s and the Control Panel to listen on a different port
+2334108	utf16	(PID: %d)
+2334140	utf16	Problem killing PID %d
+2334296	utf16	No PIDs found?!
+2336704	utf16	Error: %s shutdown unexpectedly.
+2336812	utf16	This may be due to a blocked port, missing dependencies, 
+2336940	utf16	improper privileges, a crash, or a shutdown by another method.
+2342088	utf16	New listening socket: %s:%d
+2342156	utf16	netstat
+2342184	utf16	Listening socket closed: %s:%d
+2381368	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclPeImage.pas
+2386748	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclPeImage.pas
+2421732	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2422012	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2422568	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2422932	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2423396	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2423720	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2424036	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2424360	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2424684	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2425000	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2425324	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2425648	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2425972	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2426404	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2427120	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2428912	utf16	C:\Users\Administrator\Downloads\jcl-2.7.0.5676\source\windows\JclTD32.pas
+2566684	utf16	Apache Name: "
+2566788	utf16	Apache Main: "
+2566896	utf16	Apache SSL: "
+2566936	utf16	MySQL Name: "
+2566976	utf16	MySQL: "
+2567104	utf16	FileZilla Admin: "
+2583560	utf16	Services cannot be installed or uninstalled while the service is running!
+2583724	utf16	Click Yes to uninstall the %s service
+2583816	utf16	Click Yes to install the %s service
+2583900	utf16	Service was NOT (un)installed!
+2584776	utf16	apache/conf/httpd.conf
+2584836	utf16	Apache (httpd.conf)
+2584888	utf16	apache/conf/extra/httpd-ssl.conf
+2584968	utf16	Apache (httpd-ssl.conf)
+2585028	utf16	apache/conf/extra/httpd-xampp.conf
+2585112	utf16	Apache (httpd-xampp.conf)
+2585176	utf16	php/php.ini
+2585212	utf16	PHP (php.ini)
+2585252	utf16	phpMyAdmin/config.inc.php
+2585316	utf16	phpMyAdmin (config.inc.php)
+2585416	utf16	 [Apache]
+2585448	utf16	apache
+2585524	utf16	 [phpMyAdmin]
+2585564	utf16	phpMyAdmin
+2585904	utf16	apache\logs\access.log
+2585964	utf16	Apache (access.log)
+2586016	utf16	apache\logs\error.log
+2586072	utf16	Apache (error.log)
+2586268	utf16	 [Apache]
+2586300	utf16	apache\logs
+2586904	utf16	Services cannot be installed or uninstalled while the service is running!
+2587068	utf16	Click Yes to uninstall the %s service
+2587160	utf16	Click Yes to install the %s service
+2587244	utf16	Service was NOT (un)installed!
+2587932	utf16	mysql\bin\my.ini
+2587980	utf16	my.ini
+2588264	utf16	mysql\data\mysql_error.log
+2588332	utf16	mysql_error.log
+2588408	utf16	mysql\data
+2588952	utf16	Services cannot be installed or uninstalled while the service is running!
+2589116	utf16	Click Yes to uninstall the %s service
+2589208	utf16	Click Yes to install the %s service
+2589292	utf16	Service was NOT (un)installed!
+2590592	utf16	Mercury cannot be run as service!
+2590916	utf16	MercuryMail\mercury.ini
+2590976	utf16	mercury.ini
+2591836	utf16	Services cannot be installed or uninstalled while the service is running!
+2592000	utf16	Click Yes to uninstall the %s service
+2592092	utf16	Click Yes to install the %s service
+2592176	utf16	Service was NOT (un)installed!
+2594080	utf16	xampp_shell.bat
+2594436	utf16	SET "MYSQL_HOME=%~dp0mysql\bin"
+2594502	utf16	SET "OPENSSL_CONF=%~dp0apache\bin\openssl.cnf"
+2595482	utf16	SET "Path=%~dp0;%~dp0php;%~dp0perl\site\bin;%~dp0perl\bin;%~dp0apache\bin;%~dp0mysql\bin;%~dp0FileZillaFTP;%~dp0MercuryMail;%~dp0sendmail;%~dp0webalizer;%~dp0tomcat\bin;%Path%"
+2595952	utf16	    ECHO Setting environment for using XAMPP for Windows.
+2596154	utf16	    TITLE XAMPP for Windows
+2596804	utf16	services.msc
+2604904	utf16	WARNING: Your Operating System is too old and is not supported
+2605044	utf16	XAMPP Version: 
+2605236	utf16	XAMPP Control Panel v
+2605344	utf16	Running with Administrator rights - good!
+2605440	utf16	You are not running with administrator rights! This will work for
+2605584	utf16	most application stuff but whenever you do something with services
+2605876	utf16	about running this application with administrator rights!
+2606004	utf16	XAMPP Installation Directory: "%s"
+2607004	utf16	Required XAMPP prerequisite not found!
+2607260	utf16	This is required for XAMPP to fully function
+2609072	utf16	portable
+2609120	utf16	 Portable
+2610968	utf16	Deleting PID-entry %d: %s
+2612116	utf16	Creating PID-entry %d: %s
+2612204	utf16	Deleting PID-entry %d: %s
+2653496	utf16	xampp_control
+2940054	utf16	TFNETSTAT
+2940074	utf16	TFSERVICESETTINGS
+3181224	utf16	128-Byte PrefetchingeCPUID leaf 2 does not report cache descriptor information, use CPUID leaf 4 to query cache parameters
+3198044	utf16	Exports
+3198060	utf16	Imports
+3198280	utf16	Bound Import
+3198314	utf16	Delay load import
+3200220	utf16	Unknown function at %s%This windows version is not supported&The window with handle %d is not valid
+3200720	utf16	%s parameter cannot be nil#Feature not supported by this style
+3201154	utf16	OLE error %.8x.Method '%s' not supported by automation object/Variant does not reference an automation object7Dispatch methods do not support more than 64 parameters
+3201598	utf16	Login#No OnGetItem event handler assigned%Cannot remove shell notification icon"PageControl must first be assigned"%s requires Windows Vista or later
+3202278	utf16	Unable to insert a line Clipboard does not support Icons
+3202460	utf16	Text exceeds memo capacity+Operation not supported on selected printer.There is no default printer currently selected/Menu '%s' is already being used by another form
+3206812	utf16	Unsupported clipboard format
+3206918	utf16	Canvas does not allow drawing#Text format flag '%s' not supported
+3207248	utf16	Observer is not supportedLCannot have multiple single cast observers added to the observers collection4The object does not implement the observer interfaceGNo single cast observer with ID %d was added to the observer collectionFNo multi cast observer with ID %d was added to the observer collection
+3208122	utf16	Parameter count mismatch<Type '%s' is not declared in the interface section of a unit7VAR and OUT arguments must match parameter type exactly,Specified Login Credential Service not found"%s (Version %d.%d, Build %d, %5:s):%s Service Pack %4:d (Version %1:d.%2:d, Build %3:d, %5:s)
+3209752	utf16	Duplicates not allowed5Insufficient RTTI available to support this operation2Cannot call Start on a running or suspended thread;Cannot call CheckTerminated on an externally created thread9Cannot call SetReturnValue on an externally create thread
+3210464	utf16	Invalid characters in path The specified file was not found$No help viewer that supports filters/Index out of range (%d).  Must be >= 0 and < %d2Length of Strings and Objects arrays must be equal*Class %s is not intended to be constructed
+3212000	utf16	Thread Error: %s (%d)-Cannot terminate an externally created thread,Cannot wait for an externally created thread#A component named %s already exists%String list does not allow duplicates
+3215976	utf16	Operation not supported
+3216152	utf16	Interface not supported
+3216258	utf16	Object lock not owned(Monitor support function not initialized
+3216522	utf16	No argument for format '%s'"Variant method calls not supported
+73699	ascii	poPortrait
+74086	ascii	PListEntryx-A
+78102	ascii	biClrImportant
+120411	ascii	ENoMonitorSupportException
+120446	ascii	ENoMonitorSupportExceptionL
+237169	ascii	grfLocksSupported
+552438	ascii	TListEnumerator5
+552594	ascii	TListEnumerator
+555667	ascii	TInterfaceListEnumerator>
+555854	ascii	TInterfaceListEnumerator@
+590616	ascii	ReadListEnd
+595343	ascii	WriteListEnd
+596619	ascii	tpIdle
+597208	ascii	FTerminated
+597253	ascii	FFreeOnTerminate
+597326	ascii	FOnTerminate
+598033	ascii	Terminate
+598113	ascii	CheckTerminated
+599373	ascii	FreeOnTerminate
+599623	ascii	OnTerminate
+646809	ascii	"TLoginCredentialService.TLoginFunc
+646893	ascii	#TLoginCredentialService.TLoginEvent
+647129	ascii	-TLoginCredentialService.TLoginCredentialEvent
+647195	ascii	Callback#TLoginCredentialService.TLoginEvent
+647457	ascii	3TLoginCredentialService.TLoginCredentialEventObject:
+647573	ascii	3TLoginCredentialService.TLoginCredentialEventObject
+647810	ascii	'TLoginCredentialService.TLoginFuncProxy:
+647913	ascii	'TLoginCredentialService.TLoginFuncProxyD
+648139	ascii	TLoginCredentialServiceM
+648750	ascii	TLoginCredentialService
+797621	ascii	7TLoginCredentialService.GetLoginCredentials$1253$0$Intf
+798009	ascii	7TLoginCredentialService.GetLoginCredentials$1253$ActRec
+798073	ascii	7TLoginCredentialService.GetLoginCredentials$1253$ActRec
+926296	ascii	TActionListEnumerator;
+926422	ascii	TActionListEnumerator
+957539	ascii	System.IniFiles
+957790	ascii	System.IniFiles
+958412	ascii	System.IniFiles
+959030	ascii	System.IniFiles
+960444	ascii	System.IniFiles
+960561	ascii	-TArray<System.IniFiles.TStringHash.THashItem>
+960746	ascii	2TEnumerator<System.IniFiles.TStringHash.THashItem>(
+960845	ascii	2TEnumerator<System.IniFiles.TStringHash.THashItem>
+961110	ascii	2TEnumerable<System.IniFiles.TStringHash.THashItem>'
+961301	ascii	2TEnumerable<System.IniFiles.TStringHash.THashItem>0
+961405	ascii	5TList<System.IniFiles.TStringHash.THashItem>.arrayofT
+961517	ascii	0IComparer<System.IniFiles.TStringHash.THashItem>
+961625	ascii	=TCollectionNotifyEvent<System.IniFiles.TStringHash.THashItem>
+961837	ascii	2IEnumerable<System.IniFiles.TStringHash.THashItem>
+961929	ascii	7TList<System.IniFiles.TStringHash.THashItem>.TEmptyFunc
+962201	ascii	8TList<System.IniFiles.TStringHash.THashItem>.TEnumerator5
+962357	ascii	8TList<System.IniFiles.TStringHash.THashItem>.TEnumeratorP
+963067	ascii	,TList<System.IniFiles.TStringHash.THashItem>&
+965585	ascii	,TList<System.IniFiles.TStringHash.THashItem> 
+978149	ascii	2TComparison<System.IniFiles.TStringHash.THashItem>
+978470	ascii	0TComparer<System.IniFiles.TStringHash.THashItem>2
+978725	ascii	0TComparer<System.IniFiles.TStringHash.THashItem>
+978825	ascii	?.TList`1.Pack$224$0$Intf<System.IniFiles.TStringHash.THashItem>
+979154	ascii	?@TList`1.Pack$224$ActRec<System.IniFiles.TStringHash.THashItem>
+979225	ascii	?@TList`1.Pack$224$ActRec<System.IniFiles.TStringHash.THashItem>
+979341	ascii	?.TList`1.Pack$226$0$Intf<System.IniFiles.TStringHash.THashItem>
+979691	ascii	?@TList`1.Pack$226$ActRec<System.IniFiles.TStringHash.THashItem>
+979761	ascii	?@TList`1.Pack$226$ActRec<System.IniFiles.TStringHash.THashItem>
+980032	ascii	9TDelegatedComparer<System.IniFiles.TStringHash.THashItem>8
+980221	ascii	9TDelegatedComparer<System.IniFiles.TStringHash.THashItem>
+1016552	ascii	SupportsPartialTransparency
+1017500	ascii	SupportsClipboardFormat
+1127399	ascii	Supported
+1155651	ascii	FNativeWheelSupport
+1155809	ascii	FWheelSupportMessage
+1356398	ascii	IShellItem
+1356458	ascii	IShellFolder
+1356518	ascii	IShellItemArray
+1391506	ascii	cdsIndeterminate
+1400722	ascii	FGroupID
+1401226	ascii	GroupID
+1402043	ascii	NextGroupID
+1404079	ascii	FGroupID
+1405424	ascii	GroupID
+1409256	ascii	vsReport
+1531389	ascii	FShellItem
+1531411	ascii	FShellItems
+1532763	ascii	ShellItem
+1532799	ascii	ShellItems
+1576639	ascii	FProportional
+1577329	ascii	Proportional
+1630671	ascii	TAbstractStyleServicesL
+1634370	ascii	TAbstractStyleServices 
+1634830	ascii	TCustomStyleServices.TStyleFlag
+1634909	ascii	 TCustomStyleServices.TStyleFlags
+1635701	ascii	TCustomStyleServices&
+1639438	ascii	TCustomStyleServices
+1639762	ascii	TCustomStyleServicesClass
+1649653	ascii	"TStyleManager.TStyleServicesHandle
+1652147	ascii	TCustomElementServices
+1653738	ascii	TCustomElementServices(AY
+1716857	ascii	'TArray<Vcl.Themes.TCustomStyleServices>
+1717038	ascii	,TEnumerator<Vcl.Themes.TCustomStyleServices>(
+1717129	ascii	,TEnumerator<Vcl.Themes.TCustomStyleServices>
+1717390	ascii	,TEnumerable<Vcl.Themes.TCustomStyleServices>'
+1717577	ascii	,TEnumerable<Vcl.Themes.TCustomStyleServices>h@Z
+1717673	ascii	/TList<Vcl.Themes.TCustomStyleServices>.arrayofT
+1717777	ascii	*IComparer<Vcl.Themes.TCustomStyleServices>
+1717877	ascii	7TCollectionNotifyEvent<Vcl.Themes.TCustomStyleServices>
+1717958	ascii	TCustomStyleServices
+1718081	ascii	,IEnumerable<Vcl.Themes.TCustomStyleServices>
+1718165	ascii	1TList<Vcl.Themes.TCustomStyleServices>.TEmptyFunc
+1718433	ascii	2TList<Vcl.Themes.TCustomStyleServices>.TEnumerator5
+1718585	ascii	2TList<Vcl.Themes.TCustomStyleServices>.TEnumeratorXDZ
+1719287	ascii	&TList<Vcl.Themes.TCustomStyleServices>&
+1721745	ascii	&TList<Vcl.Themes.TCustomStyleServices>
+1912169	ascii	,TComparison<Vcl.Themes.TCustomStyleServices>
+1912486	ascii	*TComparer<Vcl.Themes.TCustomStyleServices>2
+1912733	ascii	*TComparer<Vcl.Themes.TCustomStyleServices>
+1912825	ascii	9.TList`1.Pack$224$0$Intf<Vcl.Themes.TCustomStyleServices>
+1913150	ascii	9@TList`1.Pack$224$ActRec<Vcl.Themes.TCustomStyleServices>|=]
+1913213	ascii	9@TList`1.Pack$224$ActRec<Vcl.Themes.TCustomStyleServices> =]
+1913325	ascii	9.TList`1.Pack$226$0$Intf<Vcl.Themes.TCustomStyleServices>
+1913671	ascii	9@TList`1.Pack$226$ActRec<Vcl.Themes.TCustomStyleServices>
+1913737	ascii	9@TList`1.Pack$226$ActRec<Vcl.Themes.TCustomStyleServices>
+1938560	ascii	3TDelegatedComparer<Vcl.Themes.TCustomStyleServices>8
+1938741	ascii	3TDelegatedComparer<Vcl.Themes.TCustomStyleServices>8
+2006470	ascii	poProportional
+2026888	ascii	FTerminate
+2027173	ascii	FCurrentPopupID
+2029394	ascii	JumpID
+2030369	ascii	Terminate
+2032496	ascii	Terminated
+2201842	ascii	PIMAGE_EXPORT_DIRECTORY
+2201878	ascii	_IMAGE_EXPORT_DIRECTORY(
+2203451	ascii	ExportAddressTableJumps
+2245664	ascii	CheckDefaultPorts
+2245768	ascii	Apache
+2245896	ascii	Apache
+2246024	ascii	Apache
+2246164	ascii	Apache
+2246320	ascii	Apache
+2246376	ascii	FileZillaAdmin
+2246656	ascii	Apache
+2246674	ascii	ApacheSSL
+2246733	ascii	FileZillaAdmin
+2246997	ascii	Apache
+2247125	ascii	Apache
+2247563	ascii	ASApache
+2247583	ascii	ASMySQL
+2247738	ascii	EnableServices
+2247764	ascii	ServiceNames
+2247860	ascii	ServicePorts
+2263264	ascii	bbService
+2263359	ascii	bAdmin
+2263447	ascii	isService
+2263468	ascii	PIDList
+2263766	ascii	ServiceInstall
+2263812	ascii	ServiceUnInstall
+2263860	ascii	SetServiceButton
+2263926	ascii	CheckIsService
+2263971	ascii	ServiceName
+2264114	ascii	pbbService
+2264156	ascii	pPIDLabel
+2264175	ascii	pPortLabel
+2264221	ascii	pAdminButton
+2266134	ascii	PMIB_TCPTABLE_OWNER_PID4
+2266170	ascii	MIB_TCPTABLE_OWNER_PID
+2266526	ascii	tNetstatTable+
+2266589	ascii	GetPorts4PID
+2266657	ascii	GetPortCount4PID
+2266718	ascii	isPortInUse
+2266786	ascii	isPortInUsePID
+2266922	ascii	tNetstatTable
+2266946	ascii	uNetstatTable
+2269096	ascii	OldPIDs
+2269115	ascii	OldPorts
+2269258	ascii	ServiceInstall
+2269304	ascii	ServiceUnInstall
+2269462	ascii	CheckPorts
+2269548	ascii	CheckIsService
+2269699	ascii	pbbService
+2269741	ascii	pPIDLabel
+2269760	ascii	pPortLabel
+2269806	ascii	pAdminButton
+2285772	ascii	OldPIDs
+2285791	ascii	OldPorts
+2285811	ascii	OldPIDCount
+2285943	ascii	tApache.
+2285957	ascii	ServiceInstall
+2286003	ascii	ServiceUnInstall
+2286161	ascii	CheckPorts
+2286247	ascii	CheckIsService
+2286398	ascii	pbbService
+2286440	ascii	pPIDLabel
+2286459	ascii	pPortLabel
+2286505	ascii	pAdminButton
+2286566	ascii	tApache
+2286584	ascii	uApache
+2300156	ascii	OldPIDs
+2300175	ascii	OldPorts
+2300304	ascii	tMySQL.
+2300317	ascii	ServiceInstall
+2300363	ascii	ServiceUnInstall
+2300521	ascii	CheckPorts
+2300607	ascii	CheckIsService
+2300758	ascii	pbbService
+2300800	ascii	pPIDLabel
+2300819	ascii	pPortLabel
+2300865	ascii	pAdminButton
+2300926	ascii	tMySQL
+2300943	ascii	uMySQL
+2313992	ascii	OldPIDs
+2314011	ascii	OldPorts
+2314157	ascii	ServiceInstall
+2314203	ascii	ServiceUnInstall
+2314361	ascii	CheckPorts
+2314447	ascii	CheckIsService
+2314598	ascii	pbbService
+2314640	ascii	pPIDLabel
+2314659	ascii	pPortLabel
+2314705	ascii	pAdminButton
+2328440	ascii	OldPIDs
+2328459	ascii	OldPorts
+2328595	ascii	ServiceInstall
+2328641	ascii	ServiceUnInstall
+2328799	ascii	CheckPorts
+2328990	ascii	pbbService
+2329032	ascii	pPIDLabel
+2329051	ascii	pPortLabel
+2329097	ascii	pAdminButton
+2337670	ascii	tNetState
+2337745	ascii	uNetstat
+2338026	ascii	uNetstat
+2338469	ascii	lvSockets
+2338599	ascii	lvSockets
+2338802	ascii	lvSocketsColumnClick
+2338900	ascii	lvSocketsData
+2338920	ascii	lvSocketsCustomDrawItem
+2339077	ascii	TfNetstat
+2339176	ascii	lvSocketsColumnClick
+2339511	ascii	lvSocketsData
+2339586	ascii	lvSocketsCustomDrawItem
+2339894	ascii	TfNetstatT
+2339914	ascii	uNetstat
+2349582	ascii	TJclPeImportSort
+2349636	ascii	isLibImport
+2349666	ascii	TJclPeImportLibSort
+2349734	ascii	TJclPeImportKind
+2349764	ascii	ikImport
+2349773	ascii	ikDelayImport
+2349787	ascii	ikBoundImport
+2350141	ascii	FImportLib
+2350163	ascii	FIndirectImportName
+2350241	ascii	TJclPeImportFuncItemj
+2350305	ascii	AImportLib
+2350374	ascii	TJclPeImportFuncItem
+2350564	ascii	ImportLib
+2350600	ascii	IndirectImportName
+2350868	ascii	FImportDescriptor
+2350897	ascii	FImportDirectoryIndex
+2350930	ascii	FImportKind
+2351136	ascii	TJclPeImportLibItem
+2351215	ascii	AImportDescriptor
+2351242	ascii	AImportKind
+2351430	ascii	TJclPeImportLibItem
+2351655	ascii	ImportDescriptor
+2351698	ascii	ImportDirectoryIndex
+2351745	ascii	ImportKind
+2351954	ascii	:TJclPeImportList.:1
+2352299	ascii	FParallelImportTable
+2352460	ascii	TJclPeImportList6
+2352576	ascii	CheckImports
+2352641	ascii	$MakeBorlandImportTableForMappedImage
+2352954	ascii	TryGetNamesForOrdinalImports
+2353338	ascii	TJclPeImportList
+2353690	ascii	TJclPeExportSort
+2353960	ascii	FExportList
+2354121	ascii	TJclPeExportFuncItem
+2354185	ascii	AExportList
+2354322	ascii	TJclPeExportFuncItem
+2354576	ascii	IsExportedVariable
+2355183	ascii	FExportDir
+2355459	ascii	TJclPeExportFuncList6
+2356238	ascii	TJclPeExportFuncList
+2356511	ascii	ExportDir
+2364066	ascii	stNotSupported
+2364489	ascii	FExportList
+2364512	ascii	FImportList
+2365963	ascii	TryGetNamesForOrdinalImports
+2368018	ascii	ExportListP
+2368175	ascii	ImportListx
+2373939	ascii	HookImport
+2374142	ascii	ReplaceImport
+2440213	ascii	TJclDebugInfoExports'
+2440402	ascii	TJclDebugInfoExports
+2555754	ascii	pApache
+2555768	ascii	pMySQL
+2555829	ascii	mConfigApache
+2555849	ascii	mLogsApache
+2555867	ascii	mConfigMySQL
+2555886	ascii	mLogsMySQL
+2556025	ascii	pnlApache
+2556041	ascii	lblApacheConf
+2556061	ascii	lblApacheLogs
+2556081	ascii	pnlMySQL 
+2556096	ascii	lblMySQLConf$
+2556115	ascii	lblMySQLLogs(
+2556433	ascii	pApache
+2556452	ascii	pMySQL
+2556533	ascii	mConfigApache
+2556558	ascii	mLogsApache
+2556581	ascii	mConfigMySQL
+2556605	ascii	mLogsMySQL
+2556779	ascii	pnlApache
+2556800	ascii	lblApacheConf
+2556825	ascii	lblApacheLogs
+2556850	ascii	pnlMySQL
+2556870	ascii	lblMySQLConf
+2556894	ascii	lblMySQLLogs
+2561048	ascii	pApache
+2561062	ascii	pMySQL
+2561121	ascii	gApache
+2561135	ascii	lApacheName
+2561153	ascii	lApacheMain
+2561171	ascii	lApacheSSL
+2561188	ascii	tApacheName
+2561206	ascii	tApacheMain
+2561224	ascii	tApacheSSL
+2561241	ascii	gMySQL
+2561254	ascii	lMySQLMain
+2561271	ascii	lMySQLName
+2561288	ascii	tMySQLMain
+2561305	ascii	tMySQLName
+2561381	ascii	lFileZillaAdmin$
+2561445	ascii	tFileZillaAdmin0
+2561956	ascii	pApache
+2561975	ascii	pMySQL
+2562054	ascii	gApache
+2562073	ascii	lApacheName
+2562096	ascii	lApacheMain
+2562119	ascii	lApacheSSL
+2562141	ascii	tApacheName
+2562164	ascii	tApacheMain
+2562187	ascii	tApacheSSL
+2562209	ascii	gMySQL
+2562227	ascii	lMySQLMain
+2562249	ascii	lMySQLName
+2562271	ascii	tMySQLMain
+2562293	ascii	tMySQLName
+2562389	ascii	lFileZillaAdmin
+2562468	ascii	tFileZillaAdmin
+2563121	ascii	TfServiceSettings
+2563402	ascii	TfServiceSettings
+2563430	ascii	uServiceSettings
+2568700	ascii	cbASApache
+2568717	ascii	cbASMySQL
+2568790	ascii	cbCheckDefaultPorts
+2568898	ascii	bServiceSettings
+2569220	ascii	cbASApache
+2569242	ascii	cbASMySQL
+2569335	ascii	cbCheckDefaultPorts
+2569468	ascii	bServiceSettings
+2569771	ascii	bServiceSettingsClick
+2570637	ascii	bServiceSettingsClick
+2574213	ascii	imgXAMPP
+2574283	ascii	bApacheAction
+2574303	ascii	bApacheAdmin
+2574322	ascii	bMySQLAction
+2574341	ascii	bMySQLAdmin
+2574382	ascii	bFileZillaAdmin
+2574425	ascii	bMercuryAdmin
+2574498	ascii	pApacheStatus
+2574557	ascii	bNetstat
+2574605	ascii	miTerminate 
+2574632	ascii	bApacheConfig(
+2574652	ascii	lPIDs,
+2574664	ascii	lPorts0
+2574677	ascii	lApachePIDs4
+2574695	ascii	bApacheLogs8
+2574713	ascii	lApachePorts<
+2574732	ascii	bMySQLConfig@
+2574751	ascii	bMySQLLogsD
+2574845	ascii	lMySQLPIDsX
+2574862	ascii	lMySQLPorts\
+2574880	ascii	lFileZillaPorts`
+2574902	ascii	lFileZillaPIDsd
+2574923	ascii	lMercuryPortsh
+2574943	ascii	lMercuryPIDsl
+2574962	ascii	pMySQLStatusp
+2575065	ascii	bMySQLService
+2575085	ascii	bFileZillaService
+2575109	ascii	lServices
+2575155	ascii	bApacheService
+2575211	ascii	lTomcatPorts
+2575230	ascii	lTomcatPIDs
+2575268	ascii	bTomcatAdmin
+2575345	ascii	bTomcatService
+2575366	ascii	bMercuryService
+2575388	ascii	bXamppShell
+2575460	ascii	ApacheTray
+2575477	ascii	MySQLTray
+2575624	ascii	MySQLTrayControl
+2575647	ascii	ApacheTrayControl
+2575704	ascii	imgXAMPP
+2575799	ascii	bApacheAction
+2575824	ascii	bApacheAdmin
+2575848	ascii	bMySQLAction
+2575872	ascii	bMySQLAdmin
+2575923	ascii	bFileZillaAdmin
+2575976	ascii	bMercuryAdmin
+2576074	ascii	pApacheStatus
+2576148	ascii	bNetstat
+2576211	ascii	miTerminate
+2576248	ascii	bApacheConfig
+2576290	ascii	lPorts
+2576308	ascii	lApachePIDs
+2576331	ascii	bApacheLogs
+2576354	ascii	lApachePorts
+2576378	ascii	bMySQLConfig
+2576402	ascii	bMySQLLogs
+2576521	ascii	lMySQLPIDs
+2576543	ascii	lMySQLPorts
+2576566	ascii	lFileZillaPorts
+2576593	ascii	lFileZillaPIDs
+2576619	ascii	lMercuryPorts
+2576644	ascii	lMercuryPIDs
+2576668	ascii	pMySQLStatus
+2576796	ascii	bMySQLService
+2576821	ascii	bFileZillaService
+2576850	ascii	lServices
+2576911	ascii	bApacheService
+2576982	ascii	lTomcatPorts
+2577006	ascii	lTomcatPIDs
+2577054	ascii	bTomcatAdmin
+2577151	ascii	bTomcatService
+2577177	ascii	bMercuryService
+2577204	ascii	bXamppShell
+2577301	ascii	ApacheTray
+2577323	ascii	MySQLTray
+2577505	ascii	MySQLTrayControl
+2577533	ascii	ApacheTrayControl
+2577595	ascii	Apache
+2577688	ascii	WindowsShutdownInProgress
+2577741	ascii	bApacheActionClick
+2577846	ascii	bNetstatClick
+2577866	ascii	miTerminateClick
+2578025	ascii	bApacheAdminClick
+2578049	ascii	bApacheConfigClick
+2578114	ascii	bApacheLogsClick
+2578137	ascii	bMySQLActionClick
+2578161	ascii	bMySQLAdminClick
+2578184	ascii	bMySQLConfigClick
+2578208	ascii	bMySQLLogsClick
+2578258	ascii	bFileZillaAdminClick
+2578365	ascii	bMercuryAdminClick
+2578433	ascii	bApacheServiceClick
+2578459	ascii	bMySQLServiceClick
+2578484	ascii	bFileZillaServiceClick
+2578513	ascii	bMercuryServiceClick
+2578564	ascii	bXamppShellClick
+2578660	ascii	bTomcatAdminClick
+2578684	ascii	bTomcatServiceClick!
+2578786	ascii	ApacheTrayControlClick
+2578815	ascii	MySQLTrayControlClick 
+2579497	ascii	bApacheActionClick
+2579766	ascii	bNetstatClick
+2579827	ascii	miTerminateClick
+2580348	ascii	bApacheAdminClick
+2580413	ascii	bApacheConfigClick
+2580601	ascii	bApacheLogsClick
+2580665	ascii	bMySQLActionClick
+2580730	ascii	bMySQLAdminClick
+2580794	ascii	bMySQLConfigClick
+2580859	ascii	bMySQLLogsClick
+2580991	ascii	bFileZillaAdminClick
+2581262	ascii	bMercuryAdminClick
+2581453	ascii	bApacheServiceClick
+2581520	ascii	bMySQLServiceClick
+2581586	ascii	bFileZillaServiceClick
+2581656	ascii	bMercuryServiceClick
+2581789	ascii	bXamppShellClick
+2582049	ascii	bTomcatAdminClick
+2582114	ascii	bTomcatServiceClick
+2582391	ascii	ApacheTrayControlClick
+2582461	ascii	MySQLTrayControlClick
+2644021	ascii	JclShell
+2644030	ascii	Winapi.ShellAPI
+2644046	ascii	Winapi.IpExport
+2644357	ascii	System.IniFiles
+2644994	ascii	Winapi.ShellScaling
+2645143	ascii	uServiceSettings
+2645293	ascii	uNetstatTable
+2645307	ascii	uNetstat
+2645325	ascii	uServices
+2645383	ascii	uMySQL
+2645390	ascii	uApache
+2692252	ascii	SetViewportOrgEx
+2694096	ascii	TerminateProcess
+2697786	ascii	shell32.dll
+2697800	ascii	ShellExecuteExW
+2697818	ascii	ShellExecuteW
+2697834	ascii	Shell_NotifyIconW
+2698066	ascii	QueryServiceStatusEx
+2698090	ascii	QueryServiceStatus
+2698112	ascii	QueryServiceConfigW
+2698134	ascii	OpenServiceW
+2698168	ascii	EnumServicesStatusW
+2698190	ascii	CloseServiceHandle
+2700596	ascii	shell32.dll
+2701382	ascii	xampp_control3.exe
+3223462	ascii	xampp_control3
+3224277	ascii	JclShell
+3224288	ascii	Winapi.ShellAPI
+3224306	ascii	Winapi.IpExport
+3224655	ascii	System.IniFiles
+3224920	ascii	Winapi.ShellScaling
+3225678	ascii	uServiceSettings
+3225744	ascii	uNetstatTable
+3225760	ascii	uNetstat
+3225782	ascii	uServices
+3225821	ascii	uMySQL
+3225830	ascii	uApache
+3225921	ascii	Configuration of Control Panel
+3231865	ascii	ESelected modules will be started on next launch of the Control Panel.
+3232113	ascii	cbASApache
+3232225	ascii	Apache
+3232255	ascii	cbASMySQL
+3232771	ascii	cbCheckDefaultPorts
+3232894	ascii	Check default ports on startup
+3233678	ascii	bServiceSettings
+3233737	ascii	Service and Port Settings
+3233783	ascii	bServiceSettingsClick
+3233870	ascii	Start Control Panel Minimized
+3234618	ascii	BEnter user defined files. Files must be relative to xampp-basedir!
+3234923	ascii	,Example: "apache\conf\extra\httpd-info.conf"
+3237262	ascii	pApache
+3237292	ascii	pApache
+3237309	ascii	Apache
+3237342	ascii	pnlApache
+3237421	ascii	lblApacheConf
+3237670	ascii	lblApacheLogs
+3237918	ascii	mLogsApache
+3238062	ascii	mConfigApache
+3238212	ascii	pMySQL
+3238273	ascii	pnlMySQL
+3238351	ascii	lblMySQLConf
+3238599	ascii	lblMySQLLogs
+3238846	ascii	mConfigMySQL
+3238990	ascii	mLogsMySQL
+3242910	ascii	,Need Help? Visit the XAMPP forums (English):
+3243189	ascii	+Need Help? Visit the XAMPP forums (German):
+3243408	ascii	1http://www.apachefriends.org/f/viewforum.php?f=16
+3243678	ascii	0http://www.apachefriends.org/f/viewforum.php?f=4
+3253554	ascii	XAMPP Control Panel v
+3253903	ascii	imgXAMPP
+3285052	ascii	XAMPP Control Panel v
+3286732	ascii	Services
+3288123	ascii	PID(s)
+3288257	ascii	lPorts
+3288392	ascii	Port(s)
+3288527	ascii	lApachePIDs
+3288698	ascii	lApachePorts
+3288896	ascii	lMySQLPIDs
+3289056	ascii	lMySQLPorts
+3289223	ascii	lFileZillaPorts
+3289394	ascii	lFileZillaPIDs
+3289558	ascii	lMercuryPorts
+3289739	ascii	lMercuryPIDs
+3289902	ascii	lServices
+3290033	ascii	Service
+3290678	ascii	lTomcatPorts
+3290858	ascii	lTomcatPIDs
+3291021	ascii	bApacheAction
+3291163	ascii	bApacheActionClick
+3291192	ascii	bApacheAdmin
+3291333	ascii	bApacheAdminClick
+3291361	ascii	bMySQLAction
+3291502	ascii	bMySQLActionClick
+3291530	ascii	bMySQLAdmin
+3291670	ascii	bMySQLAdminClick
+3291874	ascii	bFileZillaAdmin
+3292018	ascii	bFileZillaAdminClick
+3292223	ascii	bMercuryAdmin
+3292366	ascii	bMercuryAdminClick
+3292394	ascii	pApacheStatus
+3292528	ascii	Apache
+3292574	ascii	bApacheConfig
+3292717	ascii	bApacheConfigClick
+3292746	ascii	bApacheLogs
+3292885	ascii	bApacheLogsClick
+3292912	ascii	bMySQLConfig
+3293054	ascii	bMySQLConfigClick
+3293082	ascii	bMySQLLogs
+3293220	ascii	bMySQLLogsClick
+3293770	ascii	pMySQLStatus
+3294315	ascii	bMySQLService
+3294364	ascii	"Is installed as a Windows Service?
+3294508	ascii	bMySQLServiceClick
+3294537	ascii	bFileZillaService
+3294590	ascii	"Is installed as a Windows Service?
+3294734	ascii	bFileZillaServiceClick
+3294767	ascii	bApacheService
+3294817	ascii	"Is installed as a Windows Service?
+3294961	ascii	bApacheServiceClick
+3295332	ascii	bTomcatAdmin
+3295474	ascii	bTomcatAdminClick
+3296022	ascii	bTomcatService
+3296073	ascii	"Is installed as a Windows Service?
+3296217	ascii	bTomcatServiceClick
+3296247	ascii	bMercuryService
+3296385	ascii	bFileZillaServiceClick
+3299877	ascii	bNetstat
+3299988	ascii	Netstat
+3300969	ascii	bNetstatClick
+3300993	ascii	bXamppShell
+3302086	ascii	bXamppShellClick
+3333371	ascii	ApacheTray
+3333391	ascii	Apache
+3333422	ascii	ApacheTrayControl
+3333464	ascii	ApacheTrayControlClick
+3333500	ascii	MySQLTray
+3333549	ascii	MySQLTrayControl
+3333590	ascii	MySQLTrayControlClick
+3334054	ascii	miTerminate
+3334089	ascii	miTerminateClick
+3355857	ascii	TfNetstat
+3355867	ascii	fNetstat
+3355927	ascii	Netstat - TCP Listening sockets
+3356286	ascii	lvSockets
+3356795	ascii	vsReport
+3356819	ascii	lvSocketsColumnClick
+3356858	ascii	lvSocketsCustomDrawItem
+3356890	ascii	lvSocketsData
+3357367	ascii	Active socket
+3357662	ascii	Old socket
+3357948	ascii	New socket
+3358193	ascii	TfServiceSettings
+3358211	ascii	fServiceSettings
+3358250	ascii	Service Settings
+3358554	ascii	Use this form to set service-specific and default port settings.  You can set the name and default ports the XAMPP Control Panel will check.  Do not include spaces or quotes in names.  This does NOT change the ports that the services and programs use.  You still need to change those in the services'
+3360941	ascii	pApache
+3360971	ascii	pApache
+3360988	ascii	Apache
+3361023	ascii	gApache
+3361071	ascii	Apache Settings
+3361154	ascii	lApacheName
+3361205	ascii	Service Name
+3361227	ascii	lApacheMain
+3361279	ascii	Main Port
+3361298	ascii	lApacheSSL
+3361349	ascii	SSL Port
+3361366	ascii	tApacheName
+3361539	ascii	tApacheMain
+3361712	ascii	tApacheSSL
+3361890	ascii	pMySQL
+3361971	ascii	gMySQL
+3362018	ascii	MySQL Settings
+3362100	ascii	lMySQLMain
+3362151	ascii	Main Port
+3362170	ascii	lMySQLName
+3362220	ascii	Service Name
+3362241	ascii	tMySQLMain
+3362413	ascii	tMySQLName
+3362872	ascii	Main Port
+3362945	ascii	Service Name
+3362967	ascii	lFileZillaAdmin
+3363023	ascii	Admin Port
+3363394	ascii	tFileZillaAdmin
+3363845	ascii	Port 1
+3363911	ascii	Port 2
+3363978	ascii	Port 3
+3364045	ascii	Port 4
+3364112	ascii	Port 5
+3364179	ascii	Port 6
+3364246	ascii	Port 7
+3365735	ascii	Main Port
+3365806	ascii	HTTP Port
+3365876	ascii	AJP Port
+3365945	ascii	Service Name

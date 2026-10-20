@@ -1,0 +1,25 @@
+BITXMP
+Copyright 2026 BITXMP contributors
+
+This product includes software developed by the BITXMP contributors
+and is licensed under the Apache License, Version 2.0.
+
+The application installer does not contain the Apache HTTP Server, PHP,
+or MariaDB. Those runtimes are downloaded separately and keep the license
+of their publishers:
+
+- Apache HTTP Server: Apache License, Version 2.0
+- Apache Lounge Windows builds of the Apache HTTP Server: Apache License,
+  Version 2.0, for the server. Visual C++ runtime libraries copied beside
+  the server follow Microsoft's redistribution terms for those files.
+- PHP: PHP License, version 3.01. A PHP binary built by this project is
+  not relicensed under the Apache License.
+- MariaDB: GNU General Public License, version 2. When a MariaDB binary is
+  built from source and published, the exact source tarball is published
+  beside it.
+
+Optional tools added in later phases (Adminer, Mailpit) are also downloaded
+separately and keep their own licenses (Apache License 2.0 and MIT).
+
+The names XAMPP and Apache Friends are not used as the name of this product.
+Apache, PHP, and MariaDB are trademarks of their respective owners.

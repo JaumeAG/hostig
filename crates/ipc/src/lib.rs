@@ -1,0 +1,136 @@
+//! Encuadre, testigo y transporte entre la CLI y `hostig-supervisor`.
+//!
+//! El transporte no es la crate `interprocess`: su listener no deja fijar una DACL
+//! solo para el usuario actual y SYSTEM. En Unix el socket es el de la biblioteca
+//! estándar, porque expone el descriptor para `SO_PEERCRED` / `getpeereid`. En
+//! Windows el named pipe lo crea la crate `windows`, que sí acepta esa DACL.
+
+mod frame;
+mod paths;
+mod peer;
+mod protocol;
+mod token;
+mod transport;
+
+pub use frame::{read_frame, write_frame, FrameError, MAX_FRAME_LEN};
+pub use paths::{default_data_dir, Endpoint, Layout};
+pub use protocol::success as protocol_success;
+pub use protocol::{
+    error_response, rpc_action, rpc_cause, rpc_message, Handshake, Status, PROTOCOL_VERSION,
+};
+pub use token::{load_or_create_token, tokens_match};
+pub use transport::{connect as connect_raw, listen, Accepted, ByteStream, Listener};
+
+#[derive(Debug)]
+pub enum ClientError {
+    Io(std::io::Error),
+    Rejected {
+        message: String,
+        cause: String,
+        action: String,
+    },
+}
+
+impl std::fmt::Display for ClientError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ClientError::Io(error) => write!(f, "{error}"),
+            ClientError::Rejected {
+                message,
+                cause,
+                action,
+            } => {
+                write!(f, "{message} Causa: {cause} Acción: {action}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ClientError {}
+
+impl From<std::io::Error> for ClientError {
+    fn from(error: std::io::Error) -> Self {
+        ClientError::Io(error)
+    }
+}
+
+/// Cada llamada abre su conexión, envía una petición y la cierra.
+/// Encadenar otra petición en el mismo named pipe bloquea a los dos lados.
+pub struct Client;
+
+impl Client {
+    pub fn status(layout: &Layout) -> Result<Status, ClientError> {
+        let token = load_or_create_token(&layout.token_path)?;
+        let raw = call(layout, &token, PROTOCOL_VERSION, "status")?;
+        Ok(protocol::parse_status(&raw)?)
+    }
+
+    pub fn shutdown(layout: &Layout) -> Result<(), ClientError> {
+        let token = load_or_create_token(&layout.token_path)?;
+        let raw = call(layout, &token, PROTOCOL_VERSION, "shutdown")?;
+        check_success(&raw)
+    }
+
+    pub fn connect_with_token(
+        layout: &Layout,
+        token: &str,
+        protocol: u32,
+    ) -> Result<(), ClientError> {
+        let raw = call(layout, token, protocol, "handshake")?;
+        check_success(&raw)
+    }
+
+    pub fn connect(layout: &Layout) -> Result<(), ClientError> {
+        let token = load_or_create_token(&layout.token_path)?;
+        Self::connect_with_token(layout, &token, PROTOCOL_VERSION)
+    }
+}
+
+fn map_connect_error(error: std::io::Error) -> ClientError {
+    if error.kind() == std::io::ErrorKind::PermissionDenied {
+        ClientError::Rejected {
+            message: "extremo remoto no confiable".into(),
+            cause: error.to_string(),
+            action: "arranca el supervisor con tu usuario o elimina un socket/pipe ajeno".into(),
+        }
+    } else {
+        ClientError::Io(error)
+    }
+}
+
+fn call(layout: &Layout, token: &str, protocol: u32, method: &str) -> Result<Vec<u8>, ClientError> {
+    let mut stream = connect_raw(layout).map_err(map_connect_error)?;
+    write_frame(
+        &mut stream,
+        &protocol::request(
+            1,
+            method,
+            serde_json::json!({ "protocol": protocol, "token": token }),
+        ),
+    )
+    .map_err(FrameError::into_io)?;
+    // Un solo handle: write+read. Duplicar el named pipe en Windows dejaba
+    // wait_for_close del servidor bloqueado hasta el último CloseHandle.
+    let raw = read_frame(&mut stream).map_err(FrameError::into_io)?;
+    drop(stream);
+    Ok(raw)
+}
+
+fn check_success(raw: &[u8]) -> Result<(), ClientError> {
+    let value: serde_json::Value = serde_json::from_slice(raw).map_err(|error| {
+        ClientError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, error))
+    })?;
+    if value.get("error").is_some() {
+        return Err(ClientError::Rejected {
+            message: protocol::rpc_message(&value),
+            cause: protocol::rpc_cause(&value),
+            action: protocol::rpc_action(&value),
+        });
+    }
+    Ok(())
+}
+
+/// `true` si el pid sigue en marcha. Un pid 0 no lo está.
+pub fn process_is_running(pid: u32) -> bool {
+    peer::process_is_running(pid)
+}

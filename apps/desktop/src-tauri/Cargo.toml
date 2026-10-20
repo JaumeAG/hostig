@@ -1,0 +1,20 @@
+[package]
+name = "hostig-desktop"
+version = "0.1.0"
+description = "Esqueleto de escritorio de Hostig (Tauri v2)"
+authors = ["Hostig contributors"]
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+name = "hostig_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,0 +1,24 @@
+[package]
+name = "hostig"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+description = "Cliente de consola del supervisor de Hostig."
+
+[[bin]]
+name = "hostig"
+path = "src/main.rs"
+
+[[bin]]
+name = "hostig-supervisor"
+path = "src/bin/hostig-supervisor.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+hostig-ipc = { path = "../../crates/ipc" }
+hostig-supervisor = { path = "../../crates/supervisor" }
+serde_json = "1"
+
+[dev-dependencies]
+tempfile = "3"

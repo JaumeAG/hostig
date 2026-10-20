@@ -146,19 +146,16 @@ mod unix {
     }
 
     fn peer_is_current_user(stream: &std::os::unix::net::UnixStream) -> std::io::Result<bool> {
-        use std::os::fd::AsFd;
         #[cfg(target_os = "linux")]
         {
-            let creds = nix::sys::socket::getsockopt(
-                stream.as_fd(),
-                nix::sys::socket::sockopt::PeerCredentials,
-            )
-            .map_err(|error| std::io::Error::other(error.to_string()))?;
-            Ok(creds.uid() == nix::unistd::Uid::effective())
+            let creds =
+                nix::sys::socket::getsockopt(stream, nix::sys::socket::sockopt::PeerCredentials)
+                    .map_err(|error| std::io::Error::other(error.to_string()))?;
+            Ok(nix::unistd::Uid::from_raw(creds.uid()) == nix::unistd::Uid::effective())
         }
         #[cfg(any(target_os = "macos", target_os = "ios", target_os = "freebsd"))]
         {
-            let (uid, _) = nix::sys::socket::getpeereid(stream.as_fd())
+            let (uid, _) = nix::sys::socket::getpeereid(stream)
                 .map_err(|error| std::io::Error::other(error.to_string()))?;
             Ok(uid == nix::unistd::Uid::effective())
         }

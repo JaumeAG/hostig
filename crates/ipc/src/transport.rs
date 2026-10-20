@@ -155,7 +155,7 @@ mod unix {
         }
         #[cfg(any(target_os = "macos", target_os = "ios", target_os = "freebsd"))]
         {
-            let (uid, _) = nix::sys::socket::getpeereid(stream)
+            let (uid, _) = nix::unistd::getpeereid(stream)
                 .map_err(|error| std::io::Error::other(error.to_string()))?;
             Ok(uid == nix::unistd::Uid::effective())
         }

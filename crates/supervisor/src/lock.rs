@@ -2,11 +2,14 @@ use std::fs::{File, OpenOptions};
 use std::path::Path;
 
 pub struct Lock {
-    file: File,
+    #[cfg(unix)]
+    _guard: nix::fcntl::Flock<File>,
+    #[cfg(windows)]
+    _file: File,
 }
 
 impl Lock {
-    /// `None` si otro supervisor ya tiene el candado.
+    /// Returns None if another supervisor already holds the lock.
     pub fn try_acquire(path: &Path) -> std::io::Result<Option<Self>> {
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
@@ -17,26 +20,25 @@ impl Lock {
             .create(true)
             .truncate(false)
             .open(path)?;
-        if exclusive(&file)? {
-            Ok(Some(Self { file }))
-        } else {
-            Ok(None)
-        }
+        exclusive(file)
     }
 }
 
 #[cfg(unix)]
-fn exclusive(file: &File) -> std::io::Result<bool> {
-    use std::os::fd::AsFd;
-    match nix::fcntl::flock(file.as_fd(), nix::fcntl::FlockArg::LockExclusiveNonblock) {
-        Ok(()) => Ok(true),
-        Err(nix::errno::Errno::EWOULDBLOCK) | Err(nix::errno::Errno::EAGAIN) => Ok(false),
-        Err(error) => Err(std::io::Error::other(error.to_string())),
+fn exclusive(file: File) -> std::io::Result<Option<Lock>> {
+    match nix::fcntl::Flock::lock(file, nix::fcntl::FlockArg::LockExclusiveNonblock) {
+        Ok(guard) => Ok(Some(Lock { _guard: guard })),
+        Err((_file, errno))
+            if errno == nix::errno::Errno::EWOULDBLOCK || errno == nix::errno::Errno::EAGAIN =>
+        {
+            Ok(None)
+        }
+        Err((_file, error)) => Err(std::io::Error::other(error.to_string())),
     }
 }
 
 #[cfg(windows)]
-fn exclusive(file: &File) -> std::io::Result<bool> {
+fn exclusive(file: File) -> std::io::Result<Option<Lock>> {
     use std::os::windows::io::AsRawHandle;
     use windows::Win32::Foundation::{ERROR_LOCK_VIOLATION, HANDLE};
     use windows::Win32::Storage::FileSystem::{
@@ -54,15 +56,9 @@ fn exclusive(file: &File) -> std::io::Result<bool> {
             0,
             &mut overlapped,
         ) {
-            Ok(()) => Ok(true),
-            Err(error) if error.code() == ERROR_LOCK_VIOLATION.into() => Ok(false),
+            Ok(()) => Ok(Some(Lock { _file: file })),
+            Err(error) if error.code() == ERROR_LOCK_VIOLATION.into() => Ok(None),
             Err(error) => Err(std::io::Error::other(error.to_string())),
         }
-    }
-}
-
-impl Drop for Lock {
-    fn drop(&mut self) {
-        let _ = &self.file;
     }
 }

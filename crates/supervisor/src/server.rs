@@ -150,10 +150,12 @@ fn session(
 }
 
 fn wait_for_close<R: std::io::Read + ?Sized>(stream: &mut R) -> std::io::Result<()> {
-    match read_frame(stream) {
-        Err(FrameError::Io(error)) if closed(&error) => Ok(()),
-        Err(FrameError::TooLarge(_)) | Ok(_) => Ok(()),
-        Err(FrameError::Io(error)) => Err(error),
+    let mut buf = [0u8; 1];
+    match std::io::Read::read(stream, &mut buf) {
+        Ok(0) => Ok(()),
+        Ok(_) => Ok(()),
+        Err(error) if closed(&error) => Ok(()),
+        Err(error) => Err(error),
     }
 }
 

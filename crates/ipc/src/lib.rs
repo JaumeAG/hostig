@@ -87,15 +87,9 @@ impl Client {
 }
 
 fn call(layout: &Layout, token: &str, protocol: u32, method: &str) -> Result<Vec<u8>, ClientError> {
-    let mut writer = connect_raw(layout)?;
-    let mut reader = writer.try_clone()?;
-    let (tx, rx) = std::sync::mpsc::channel();
-    std::thread::spawn(move || {
-        let result = read_frame(&mut reader).map_err(FrameError::into_io);
-        let _ = tx.send(result);
-    });
+    let mut stream = connect_raw(layout)?;
     write_frame(
-        &mut writer,
+        &mut stream,
         &protocol::request(
             1,
             method,
@@ -103,10 +97,10 @@ fn call(layout: &Layout, token: &str, protocol: u32, method: &str) -> Result<Vec
         ),
     )
     .map_err(FrameError::into_io)?;
-    let raw = rx.recv().map_err(|_| {
-        std::io::Error::other("la lectura de la respuesta terminó antes de tiempo")
-    })??;
-    drop(writer);
+    // Un solo handle: write+read. Duplicar el named pipe en Windows dejaba
+    // wait_for_close del servidor bloqueado hasta el último CloseHandle.
+    let raw = read_frame(&mut stream).map_err(FrameError::into_io)?;
+    drop(stream);
     Ok(raw)
 }
 

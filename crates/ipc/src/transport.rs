@@ -193,12 +193,13 @@ mod windows {
     };
     use windows::Win32::System::Pipes::{
         ConnectNamedPipe, CreateNamedPipeW, DisconnectNamedPipe, GetNamedPipeClientProcessId,
-        PIPE_READMODE_MESSAGE, PIPE_REJECT_REMOTE_CLIENTS, PIPE_TYPE_MESSAGE,
-        PIPE_UNLIMITED_INSTANCES,
+        PIPE_READMODE_BYTE, PIPE_REJECT_REMOTE_CLIENTS, PIPE_TYPE_BYTE, PIPE_UNLIMITED_INSTANCES,
     };
 
     pub struct PipeStream {
         handle: HANDLE,
+        /// Solo el extremo del servidor debe llamar a DisconnectNamedPipe.
+        server: bool,
     }
 
     unsafe impl Send for PipeStream {}
@@ -220,14 +221,19 @@ mod windows {
                 )
                 .map_err(io_err)?;
             }
-            Ok(Box::new(PipeStream { handle: copied }))
+            Ok(Box::new(PipeStream {
+                handle: copied,
+                server: self.server,
+            }))
         }
     }
 
     impl Drop for PipeStream {
         fn drop(&mut self) {
             unsafe {
-                let _ = DisconnectNamedPipe(self.handle);
+                if self.server {
+                    let _ = DisconnectNamedPipe(self.handle);
+                }
                 let _ = CloseHandle(self.handle);
             }
         }
@@ -284,7 +290,10 @@ mod windows {
         }
         let same_user = client_is_current_user(handle).unwrap_or(false);
         Ok(Accepted {
-            stream: Box::new(PipeStream { handle }),
+            stream: Box::new(PipeStream {
+                handle,
+                server: true,
+            }),
             same_user,
         })
     }
@@ -305,7 +314,12 @@ mod windows {
                 )
             };
             match result {
-                Ok(handle) => return Ok(PipeStream { handle }),
+                Ok(handle) => {
+                    return Ok(PipeStream {
+                        handle,
+                        server: false,
+                    })
+                }
                 Err(error) if error.code() == ERROR_PIPE_BUSY.into() => {
                     std::thread::sleep(std::time::Duration::from_millis(50));
                     last = io_err(error);
@@ -328,7 +342,7 @@ mod windows {
             CreateNamedPipeW(
                 PCWSTR(wide.as_ptr()),
                 PIPE_ACCESS_DUPLEX,
-                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS,
+                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_REJECT_REMOTE_CLIENTS,
                 PIPE_UNLIMITED_INSTANCES,
                 64 * 1024,
                 64 * 1024,

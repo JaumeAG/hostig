@@ -11,6 +11,9 @@ members = [
     "crates/runtimes",
     "crates/supervisor",
 ]
+exclude = [
+    "apps/desktop/src-tauri",
+]
 
 [workspace.package]
 version = "0.1.0"

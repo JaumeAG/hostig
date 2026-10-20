@@ -20,7 +20,13 @@ Antes de `stop` de una instancia MariaDB, y antes de sustituir el binario o el d
 
 El volcado no se hace en cada `stop`. Se hace solo si hubo escrituras desde la última copia correcta, o si esa copia tiene más de 24 horas. Las 24 horas son el defecto y se cambian en el manifiesto global. No haber copia anterior cuenta como copia vieja: el primer `stop` sí vuelca.
 
-Las escrituras se detectan con contadores del servidor (`Innodb_rows_inserted`, `Innodb_rows_updated` e `Innodb_rows_deleted`, o el conjunto equivalente que esa versión exponga en `SHOW GLOBAL STATUS`). El supervisor guarda la suma al cerrar cada copia correcta. No se detectan copiando el datadir.
+Los contadores `Innodb_rows_inserted`, `Innodb_rows_updated` e `Innodb_rows_deleted` no bastan: se reinician con el servidor, no ven tablas de otro motor y no ven un cambio de esquema. Se considera que hubo escrituras, y por tanto hace falta volcar, en cualquiera de estos casos:
+
+- El servidor se reinició desde la última copia correcta. Al guardar la copia se anota el identificador de arranque: el instante de arranque derivado de `Uptime` (el reloj del supervisor menos `Uptime`) o el identificador de arranque que esa versión exponga. Si el arranque actual no es el mismo, el servidor se reinició. `Uptime` y los contadores de estado vuelven a cero en cada arranque, así que un contador que no crece después de un reinicio no demuestra que no hubiera escrituras.
+- Existe alguna tabla de usuario con motor distinto de InnoDB. Los contadores de filas de InnoDB no ven esas tablas. Los esquemas internos del servidor (`mysql`, `sys`, `information_schema`, `performance_schema`) no cuentan como tablas de usuario.
+- Aumentó alguno de los contadores de escritura o de DDL desde la copia: `Com_insert`, `Com_update`, `Com_delete`, `Com_create_table`, `Com_alter_table`, `Com_drop_table`, y los equivalentes de escritura o de DDL que esa versión exponga (entre ellos `Com_replace`, `Com_truncate` y `Com_rename_table`). El supervisor guarda el valor de cada uno al cerrar la copia correcta.
+
+Ante la duda, se vuelca. No se detectan las escrituras copiando el datadir.
 
 Durante el apagado del sistema, el cierre de sesión o la suspensión no se hace volcado, aunque haya escrituras o la copia tenga más de 24 horas. Ese camino es el [ADR 0011](0011-apagado-del-sistema.md).
 Si el volcado hace falta y falla, **no se para** y **no se actualiza**. El error incluye la causa (servidor ya caído, disco lleno, permiso) y la acción. Existe un override explícito, `stop --without-backup`, que el log marca como cierre sin copia. La UI no lo ofrece como botón primario: hace falta escribir la confirmación. Si el servidor ya no responde al ping, no hay dump posible; el camino es el de recuperación del [ADR 0003](0003-supervision-de-procesos.md), y el error lo dice en vez de fingir una copia.

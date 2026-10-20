@@ -56,6 +56,13 @@ SSL local: el generador crea una CA en `{datos}/ca/` y un certificado por domini
 
 El MVP de la arquitectura arranca un solo Apache, un solo PHP y una sola MariaDB, con un vhost de prueba generado. El manifiesto de proyectos y el `.test` llegan en la fase 2. Las plantillas existen desde el MVP para que ese vhost único ya salga del generador y no de un conf escrito a mano.
 
+## Verificación de la Fase 1
+
+Con el ZIP oficial NTS de Windows, antes de cerrar la fase 1:
+
+- Al llegar a `PHP_FCGI_MAX_REQUESTS` el `php-cgi` sale con código 0. Si ese build sale con otro código, el reciclado no cuenta como éxito y hay que revisar el backoff del [ADR 0003](0003-supervision-de-procesos.md).
+- Durante ese reciclado, `mod_proxy_balancer` no deja el miembro marcado como caído más de un segundo. Cada miembro lleva `retry=1`. En `mod_proxy`, `retry` es el tiempo en segundos que Apache espera antes de volver a usar un worker en error (<https://httpd.apache.org/docs/2.4/mod/mod_proxy.html#balancermember>). La prueba pide las suficientes peticiones para cruzar el límite y comprueba que el miembro vuelve a recibir tráfico dentro de ese segundo.
+
 ## Consecuencias
 
 - Cambiar la versión de PHP de un proyecto regenera su pool y recarga Apache. No reinstala el runtime si ya está en disco.

@@ -19,11 +19,10 @@ El supervisor distingue tres avisos: apagado, cierre de sesión y suspensión. L
 
 ### Cómo llega el aviso
 
-**Windows.** El supervisor crea una ventana solo de mensajes (`HWND_MESSAGE`) y un bucle de mensajes en un hilo dedicado. Esa ventana es el mecanismo explícito que un proceso sin ventana no tiene de otra forma.
+**Windows.** Una ventana creada con `HWND_MESSAGE` no recibe mensajes de difusión. La documentación de Microsoft lo dice así: una message-only window «does not receive broadcast messages» (<https://learn.microsoft.com/en-us/windows/win32/winmsg/window-features#message-only-windows>). `WM_QUERYENDSESSION` se envía cuando la sesión va a terminar y la ventana lo recibe por su `WindowProc` (<https://learn.microsoft.com/en-us/windows/win32/shutdown/wm-queryendsession>). `WM_POWERBROADCAST` también llega por el `WindowProc` (<https://learn.microsoft.com/en-us/windows/win32/power/wm-powerbroadcast>). Esos dos avisos no entran en una ventana solo de mensajes.
 
-- Apagado: `WM_QUERYENDSESSION` y `WM_ENDSESSION`.
-- Cierre de sesión: el mismo par, con `ENDSESSION_LOGOFF`, y además `WTSRegisterSessionNotification` (`WTS_SESSION_LOGOFF`).
-- Suspensión y reanudación: `RegisterSuspendResumeNotification` o, en su defecto, `WM_POWERBROADCAST` con `PBT_APMSUSPEND` y `PBT_APMRESUMEAUTOMATIC`.
+- Apagado y cierre de sesión: una ventana de nivel superior oculta, que nunca se muestra, con su bucle de mensajes en un hilo dedicado. Atiende `WM_QUERYENDSESSION` y `WM_ENDSESSION`. El cierre de sesión es ese mismo par con `ENDSESSION_LOGOFF`, y además `WTSRegisterSessionNotification` (`WTS_SESSION_LOGOFF`) sobre esa ventana.
+- Suspensión y reanudación: `RegisterSuspendResumeNotification` con `DEVICE_NOTIFY_CALLBACK`. El callback recibe `PBT_APMSUSPEND`, `PBT_APMRESUMESUSPEND` y `PBT_APMRESUMEAUTOMATIC` sin usar la ventana (<https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registersuspendresumenotification>).
 
 Mientras dura la parada rápida se llama a `ShutdownBlockReasonCreate`. Al terminar, o al vencer el plazo, `ShutdownBlockReasonDestroy`, para no retener el apagado. No se registra un servicio de Windows para recibir `SERVICE_CONTROL_PRESHUTDOWN`: el MVP sigue siendo un proceso de usuario.
 
@@ -57,7 +56,7 @@ Apache y PHP pueden ir en un job propio si el test de cierre de Apache Lounge de
 
 ## Consecuencias
 
-- Hace falta un hilo con bucle de mensajes en Windows aunque el supervisor no tenga UI.
+- Hace falta un hilo con bucle de mensajes para la ventana oculta de apagado y de cierre de sesión. La suspensión no usa esa ventana: llega por el callback de `RegisterSuspendResumeNotification`.
 - Un apagado del sistema puede cortar peticiones. Es preferible a un kill de MariaDB, y no sustituye al `stop` normal, que sí puede volcar.
 - Si el breakaway está denegado, la base no arranca. El mensaje tiene que decirlo antes de dejar un datadir a medias.
 - La suspensión que deja MariaDB en marcha puede coincidir con un portátil que duerme a mitad de una escritura. InnoDB ya hace esa recuperación; el supervisor no la adelanta con un kill.
@@ -68,3 +67,12 @@ Apache y PHP pueden ir en un job propio si el test de cierre de Apache Lounge de
 - Volcar la base al recibir el aviso. No cabe en el plazo, y un volcado cortado por `SIGKILL` parecería una copia.
 - `PR_SET_PDEATHSIG`, o un job con kill-on-close, para «no dejar huérfanos». Deja a MariaDB muerto sin shutdown en cuanto el supervisor desaparece.
 - Tratar la suspensión como un apagado y parar siempre. Un portátil que duerme no debería exigir un dump ni un kill.
+- Una ventana `HWND_MESSAGE` para oír el apagado. No recibe difusión, y `WM_QUERYENDSESSION` y `WM_POWERBROADCAST` se entregan a ventanas de nivel superior.
+
+## Verificaciones de la Fase 1
+
+Dos pruebas en Windows, antes de cerrar la fase 1. El resultado queda escrito en el informe de la fase.
+
+1. Qué hacen `mariadbd.exe` y `httpd.exe` por su cuenta cuando Windows envía `CTRL_SHUTDOWN_EVENT` o `CTRL_LOGOFF_EVENT` a su consola oculta. La prueba anota, para cada binario y cada señal, si el proceso sale, si hace su propio shutdown, o si la ignora. También anota si la señal no llega. `HandlerRoutine` dice que `CTRL_LOGOFF_EVENT` y `CTRL_SHUTDOWN_EVENT` los reciben los servicios, y que una aplicación interactiva ya no está cuando el sistema los envía (<https://learn.microsoft.com/en-us/windows/console/handlerroutine>). `SetConsoleCtrlHandler` añade que, si el proceso carga `user32.dll` o `gdi32.dll`, el handler no se llama para esos dos eventos (<https://learn.microsoft.com/en-us/windows/console/setconsolectrlhandler>).
+2. Cuánto margen real deja Windows después de entregar `WM_ENDSESSION`, medido en el proceso, antes de terminarlo. El objetivo de unos 5 segundos y el tope de 20 segundos de este ADR no se acortan hasta tener esa medida. Microsoft documenta que una aplicación sin ventana visible se termina si no responde a `WM_QUERYENDSESSION` o a `WM_ENDSESSION` en 5 segundos (<https://learn.microsoft.com/en-us/windows/win32/shutdown/shutdown-changes-for-windows-vista>), y que la sesión puede terminar en cuanto la aplicación vuelve de `WM_ENDSESSION` (<https://learn.microsoft.com/en-us/windows/win32/shutdown/wm-endsession>).
+

@@ -5,9 +5,9 @@
 
 ## Contexto
 
-BITXMP no debe copiar el modelo de XAMPP: un árbol fijo en `C:\` con binarios viejos, un `my.ini` dentro de `data` que apunta a otra ruta, y el runtime mezclado con el código del producto. Las prioridades son estabilidad y luego eficiencia. Varias versiones tienen que poder convivir. Nada se instala en `Program Files`, `/usr` ni `/opt`, y no se toca el `PATH` del sistema.
+Hostig no debe copiar el modelo de XAMPP: un árbol fijo en `C:\` con binarios viejos, un `my.ini` dentro de `data` que apunta a otra ruta, y el runtime mezclado con el código del producto. Las prioridades son estabilidad y luego eficiencia. Varias versiones tienen que poder convivir. Nada se instala en `Program Files`, `/usr` ni `/opt`, y no se toca el `PATH` del sistema.
 
-El instalador de BITXMP no redistribuye Apache, PHP ni MariaDB ([ADR 0009](0009-licencia.md)). El supervisor los descarga cuando hacen falta.
+El instalador de Hostig no redistribuye Apache, PHP ni MariaDB ([ADR 0009](0009-licencia.md)). El supervisor los descarga cuando hacen falta.
 
 Investigación de fuentes, octubre de 2026:
 
@@ -37,9 +37,9 @@ Nunca en una ruta de sistema. Raíz de datos:
 
 | Sistema | Carpeta |
 |---|---|
-| Windows | `%LOCALAPPDATA%\BITXMP` |
-| macOS | `~/Library/Application Support/BITXMP` |
-| Linux | `$XDG_DATA_HOME/bitxmp` o `~/.local/share/bitxmp` |
+| Windows | `%LOCALAPPDATA%\Hostig` |
+| macOS | `~/Library/Application Support/Hostig` |
+| Linux | `$XDG_DATA_HOME/hostig` o `~/.local/share/hostig` |
 
 Runtimes: `{datos}/runtimes/{componente}/{versión}-{os}-{arch}/`. Varias versiones conviven como directorios hermanos. Borrar una versión es borrar ese directorio, y el supervisor lo rechaza si algún proyecto la tiene en ejecución.
 

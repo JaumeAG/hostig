@@ -5,7 +5,7 @@
 
 ## Contexto
 
-BITXMP tiene que mantener Apache, PHP y MariaDB vivos aunque la ventana se cierre, y la misma operación debe existir en una CLI. Si el proceso de la UI fuera el padre de los servidores, cerrar la ventana o un fallo del webview tiraría los servicios. XAMPP mezcla panel, scripts `.bat` y el estado real del proceso; el análisis de `C:\xampp_8_2` muestra PID files atrasados y una parada que no pasa por el servidor de base de datos ([xampp-analisis.md](../research/xampp-analisis.md)).
+Hostig tiene que mantener Apache, PHP y MariaDB vivos aunque la ventana se cierre, y la misma operación debe existir en una CLI. Si el proceso de la UI fuera el padre de los servidores, cerrar la ventana o un fallo del webview tiraría los servicios. XAMPP mezcla panel, scripts `.bat` y el estado real del proceso; el análisis de `C:\xampp_8_2` muestra PID files atrasados y una parada que no pasa por el servidor de base de datos ([xampp-analisis.md](../research/xampp-analisis.md)).
 
 Tauri v2 ya tiene IPC entre el webview y su proceso Rust. Ese canal no sirve para la CLI ni sobrevive al cierre de la ventana.
 
@@ -15,9 +15,9 @@ Hace falta un transporte que exista en Windows, macOS y Linux, que no pida un pu
 
 Hay tres procesos de producto:
 
-1. `bitxmp-supervisor`, demonio de usuario. Es el único que arranca y para servidores.
+1. `hostig-supervisor`, demonio de usuario. Es el único que arranca y para servidores.
 2. La app Tauri (React). Es un cliente.
-3. `bitxmp`, la CLI. Es un cliente.
+3. `hostig`, la CLI. Es un cliente.
 
 Si el supervisor no está en marcha, la UI o la CLI lo arrancan y se conectan. Un segundo arranque ve el lock y solo se conecta. Cerrar la UI no para el supervisor ni los servidores. Parar el supervisor es un comando explícito, y antes aplica el apagado ordenado del [ADR 0003](0003-supervision-de-procesos.md).
 
@@ -27,9 +27,9 @@ Un socket de flujo, solo local, con la misma semántica en las tres plataformas:
 
 | Sistema | Mecanismo | Dirección |
 |---|---|---|
-| Linux | Socket de dominio Unix | `$XDG_RUNTIME_DIR/bitxmp/supervisor.sock`, o `/run/user/$UID/bitxmp/supervisor.sock` si `XDG_RUNTIME_DIR` no existe |
-| macOS | Socket de dominio Unix | `~/Library/Application Support/BITXMP/run/supervisor.sock` |
-| Windows | Named pipe | `\\.\pipe\bitxmp\supervisor` |
+| Linux | Socket de dominio Unix | `$XDG_RUNTIME_DIR/hostig/supervisor.sock`, o `/run/user/$UID/hostig/supervisor.sock` si `XDG_RUNTIME_DIR` no existe |
+| macOS | Socket de dominio Unix | `~/Library/Application Support/Hostig/run/supervisor.sock` |
+| Windows | Named pipe | `\\.\pipe\hostig\supervisor` |
 
 El directorio del socket queda en modo `0700` y el socket en `0600`. En Windows la DACL del pipe concede acceso al usuario actual y a SYSTEM, y a nadie más.
 

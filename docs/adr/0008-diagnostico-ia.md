@@ -22,7 +22,7 @@ El prompt incluye solo: sistema operativo, versiones de los runtimes en uso, las
 
 Antes del primer envío a un proveedor que no sea loopback, la UI muestra el extracto y pide confirmación. Ollama en loopback no pide esa confirmación cada vez; la configuración inicial sí explica que el texto del log llega al modelo local.
 
-No hay telemetría de diagnósticos hacia BITXMP. No hay modelo embebido en el instalador.
+No hay telemetría de diagnósticos hacia Hostig. No hay modelo embebido en el instalador.
 
 Si el proveedor falla, el módulo devuelve el error de red y el mismo extracto. El resto de la app sigue igual.
 

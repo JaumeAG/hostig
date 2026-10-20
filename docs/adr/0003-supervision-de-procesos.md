@@ -34,7 +34,7 @@ El proceso se lanza con el ejecutable absoluto del runtime y un archivo de confi
 |---|---|---|
 | MariaDB | `mariadb-admin --protocol=tcp ping` contra `127.0.0.1` y el puerto de esa instancia, con el usuario de administración | 2 s en el arranque, luego 5 s |
 | PHP | Conexión al socket del pool (Unix) o al `127.0.0.1` de `php-cgi` (Windows) | Igual |
-| Apache | `GET /__bitxmp/health` en el puerto de esa instancia, respuesta 200 generada por nosotros | Igual |
+| Apache | `GET /__hostig/health` en el puerto de esa instancia, respuesta 200 generada por nosotros | Igual |
 
 Un health check fallido no mata al momento. Tres fallos seguidos marcan el proceso como caído.
 

@@ -7,7 +7,7 @@
 
 XAMPP comprueba puertos con `GetExtendedTcpTable` y puede negarse a arrancar, pero sus scripts de parada no identifican al dueño: matan por nombre de imagen. En la inspección, el único `mysqld` vivo era de otra instalación y escuchaba en 3307, mientras esta raíz declaraba 3306 en tres archivos distintos y un cuarto `my.ini` apuntaba a otro directorio de datos.
 
-BITXMP necesita saber, antes de crear un proceso, si el puerto está libre y, si no lo está, quién lo tiene. El módulo de puertos no mata procesos. Informa al supervisor.
+Hostig necesita saber, antes de crear un proceso, si el puerto está libre y, si no lo está, quién lo tiene. El módulo de puertos no mata procesos. Informa al supervisor.
 
 ## Decisión
 

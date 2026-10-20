@@ -13,12 +13,12 @@ La regla del proyecto prohíbe tocar PATH, servicios de Windows, hosts o puertos
 
 ## Decisión
 
-El supervisor y la UI corren como el usuario. Un helper aparte, `bitxmp-helper`, es el único binario que se eleva, y solo sabe hacer cuatro operaciones:
+El supervisor y la UI corren como el usuario. Un helper aparte, `hostig-helper`, es el único binario que se eleva, y solo sabe hacer cuatro operaciones:
 
-1. Insertar o quitar un bloque marcado dentro del archivo hosts (`# bitxmp-begin` … `# bitxmp-end`). Fuera del bloque no se reescribe nada.
+1. Insertar o quitar un bloque marcado dentro del archivo hosts (`# hostig-begin` … `# hostig-end`). Fuera del bloque no se reescribe nada.
 2. Instalar o retirar la CA local del almacén de confianza del sistema (máquina en Windows, System keychain en macOS, el almacén que use la distro en Linux).
 3. Reenviar 80 y 443 al puerto alto en el que Apache ya escucha. Es el único mecanismo, y es el mismo en Windows, macOS y Linux. El helper instala un reenvío reversible: portproxy en Windows, `pf` en macOS, nftables en Linux. Apache sigue siendo un proceso del usuario, atado al puerto alto. La UI tiene que mostrar que el proceso que escucha en 80 no es Apache. La operación 4 deshace el reenvío junto con el bloque de hosts y la CA.
-4. Deshacer 1, 2 y 3 por completo (`bitxmp privileges reset`).
+4. Deshacer 1, 2 y 3 por completo (`hostig privileges reset`).
 
 El helper no acepta un shell, ni una ruta arbitraria, ni un `taskkill`. Cada invocación recibe un subcomando y argumentos acotados (hostname ya validado como label DNS, puerto de destino que ya pasó por el módulo de puertos). La UI pide confirmación en el momento, con el texto de lo que va a cambiar.
 
@@ -46,7 +46,7 @@ Pasar al modo con helper es optativo y reversible.
 - El MVP no incluye el helper. Arrancar y parar el stack no depende de él.
 - El reenvío 80→8080 es un comportamiento distinto de «Apache escucha en 80». Hay que mostrarlo en la UI para que la persona sepa dónde está el certificado y el log.
 - Una política polkit o un helper de macOS es código con superficie de seguridad. Se revisa aparte y sus operaciones tienen tests de «rechaza argumentos que no están en la lista».
-- Desinstalar BITXMP sin `privileges reset` dejaría líneas en hosts y una CA confiada. El desinstalador llama a reset si el helper sigue presente, y la documentación dice cómo quitar el bloque a mano si no.
+- Desinstalar Hostig sin `privileges reset` dejaría líneas en hosts y una CA confiada. El desinstalador llama a reset si el helper sigue presente, y la documentación dice cómo quitar el bloque a mano si no.
 
 ## Alternativas descartadas
 

@@ -1,12 +1,12 @@
-# Arquitectura de BITXMP
+# Arquitectura de Hostig
 
-BITXMP es una alternativa open source y gratuita a XAMPP, para Windows, macOS y Linux. El núcleo está en Rust, dentro de un proceso supervisor. La interfaz es una app Tauri v2 con React, TypeScript y Tailwind. Una CLI habla con el mismo supervisor.
+Hostig es una alternativa open source y gratuita a XAMPP, para Windows, macOS y Linux. El núcleo está en Rust, dentro de un proceso supervisor. La interfaz es una app Tauri v2 con React, TypeScript y Tailwind. El identificador provisional del bundle es `dev.hostig.app`, pendiente de confirmar el dominio. Una CLI habla con el mismo supervisor.
 
 Prioridades, en este orden: estabilidad, eficiencia, experiencia visual. El aspecto se trabaja cuando arrancar y parar ya es fiable. Este documento no contiene código de producto. Las decisiones están en [adr/](adr/README.md). El comportamiento que se quiere evitar está descrito en [research/xampp-analisis.md](research/xampp-analisis.md).
 
 ## Qué problema resuelve la forma del sistema
 
-XAMPP junta el panel, scripts de parada y el estado real de los procesos. En la instalación analizada, parar MariaDB no pasa por el servidor, los archivos PID quedan atrasados y el registro de InnoDB entra en recuperación sin una línea de apagado. BITXMP separa esas responsabilidades para que cada una tenga un dueño y una prueba.
+XAMPP junta el panel, scripts de parada y el estado real de los procesos. En la instalación analizada, parar MariaDB no pasa por el servidor, los archivos PID quedan atrasados y el registro de InnoDB entra en recuperación sin una línea de apagado. Hostig separa esas responsabilidades para que cada una tenga un dueño y una prueba.
 
 Reglas que salen de ahí:
 
@@ -22,10 +22,10 @@ Reglas que salen de ahí:
 flowchart TB
   subgraph clientes [Clientes]
     UI["App Tauri<br/>React + TypeScript"]
-    CLI["CLI bitxmp"]
+    CLI["CLI hostig"]
   end
 
-  subgraph supervisor [bitxmp-supervisor]
+  subgraph supervisor [hostig-supervisor]
     IPC[IPC local]
     RT[Runtimes]
     PR[Proyectos y plantillas]
@@ -48,7 +48,7 @@ flowchart TB
   PS --> Apache[Apache httpd]
   PS --> PHP[PHP FastCGI]
   PS --> DB[MariaDB]
-  PR -.-> Helper["bitxmp-helper<br/>solo si el usuario eleva"]
+  PR -.-> Helper["hostig-helper<br/>solo si el usuario eleva"]
 ```
 
 | Módulo | Responsabilidad | No hace |
@@ -82,7 +82,7 @@ sequenceDiagram
   S->>M: ping y lectura del error log
   S->>P: pool de la versión pedida
   S->>A: httpd con conf generada
-  S->>A: GET /__bitxmp/health
+  S->>A: GET /__hostig/health
   S-->>UI: en marcha, o causa y acción
 
   UI->>S: stop
@@ -100,9 +100,11 @@ Cerrar la ventana no dispara `stop`. El supervisor sigue. Pararlo es un comando,
 
 | Sistema | Carpeta de datos |
 |---|---|
-| Windows | `%LOCALAPPDATA%\BITXMP` |
-| macOS | `~/Library/Application Support/BITXMP` |
-| Linux | `$XDG_DATA_HOME/bitxmp` o `~/.local/share/bitxmp` |
+| Windows | `%LOCALAPPDATA%\Hostig` |
+| macOS | `~/Library/Application Support/Hostig` |
+| Linux | `$XDG_DATA_HOME/hostig` o `~/.local/share/hostig` |
+
+Otra carpeta solo si `HOSTIG_DATA_DIR` apunta a ella.
 
 ```text
 {datos}/
@@ -115,7 +117,7 @@ Cerrar la ventana no dispara `stop`. El supervisor sigue. Pararlo es un comando,
   ca/                        # CA local, claves 0600
 ```
 
-El código del sitio queda en la carpeta que elija la persona. El socket del supervisor no vive en esta raíz en Linux: va a `$XDG_RUNTIME_DIR/bitxmp/supervisor.sock`. En macOS y Windows la ruta está en el [ADR 0001](adr/0001-supervisor-ipc.md).
+El código del sitio queda en la carpeta que elija la persona. El socket del supervisor no vive en esta raíz en Linux: va a `$XDG_RUNTIME_DIR/hostig/supervisor.sock`. En macOS y Windows la ruta está en el [ADR 0001](adr/0001-supervisor-ipc.md).
 
 ## Decisiones
 
@@ -151,12 +153,12 @@ FastCGI es deliberado: permite una versión de PHP por proyecto sin cargar `mod_
 Todavía no hay código. Esta es la forma prevista, para que los módulos no se mezclen cuando se escriba.
 
 ```text
-bitxmp/
+hostig/
   apps/
     desktop/                 # Tauri v2, React, TypeScript, Tailwind
     cli/                     # cliente delgado del supervisor
   crates/
-    supervisor/              # binario bitxmp-supervisor, compone los módulos
+    supervisor/              # binario hostig-supervisor, compone los módulos
     ipc/                     # framing, auth, tipos de comandos
     runtimes/
     processes/
@@ -165,7 +167,7 @@ bitxmp/
     backup/
     diagnose/                # se puede compilar sin proveedor
   helpers/
-    privileged/              # bitxmp-helper, fase 3
+    privileged/              # hostig-helper, fase 3
   templates/
     apache/
     php/
@@ -240,8 +242,8 @@ Ollama o clave del usuario, y el trabajo de interfaz. Nada de esta fase bloquea 
 
 La misma lista cierra la fase 1 en Windows x64, la fase 1b en Linux y la fase 1c en macOS. En una carpeta de datos vacía, en el sistema de esa fase:
 
-1. `bitxmp start` descarga lo que falte, verifica el hash, arranca Apache, el pool de PHP y MariaDB y responde cuando el health check HTTP pasa por Apache y PHP y `mariadb-admin ping` responde.
-2. `bitxmp stop` vuelca la base si no hay una copia de menos de 24 horas o si hubo escrituras desde la última, apaga MariaDB con su comando de shutdown, para PHP y Apache, y termina con el puerto libre, los procesos desaparecidos y una línea de apagado en el log de MariaDB. En esta prueba de carpeta vacía el volcado sí ocurre.
+1. `hostig start` descarga lo que falte, verifica el hash, arranca Apache, el pool de PHP y MariaDB y responde cuando el health check HTTP pasa por Apache y PHP y `mariadb-admin ping` responde.
+2. `hostig stop` vuelca la base si no hay una copia de menos de 24 horas o si hubo escrituras desde la última, apaga MariaDB con su comando de shutdown, para PHP y Apache, y termina con el puerto libre, los procesos desaparecidos y una línea de apagado en el log de MariaDB. En esta prueba de carpeta vacía el volcado sí ocurre.
 3. Con el puerto ya ocupado por otro programa, `start` no lanza servidores. La respuesta nombra al ocupante y propone otro puerto.
 4. Cerrar la ventana deja los servidores en marcha. `stop` desde la CLI los apaga igual.
 5. Ningún paso pide administrador, no cambia el `PATH` y no escribe fuera de la carpeta de datos. En Windows las DLL de Visual C++ van dentro de la carpeta del runtime.

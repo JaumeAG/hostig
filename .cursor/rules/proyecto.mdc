@@ -1,9 +1,9 @@
 ---
-description: Reglas permanentes de BITXMP — pruebas, módulos aislados, sistema, logs y REA
+description: Reglas permanentes de Hostig — pruebas, módulos aislados, sistema, logs y REA
 alwaysApply: true
 ---
 
-# BITXMP
+# Hostig
 
 Gestor local de entornos de desarrollo (sustituto de XAMPP). Prioridad: estabilidad, bajo consumo, UI clara/oscura y varias versiones de PHP y MySQL/MariaDB por proyecto.
 

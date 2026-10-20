@@ -141,6 +141,48 @@ fn supervisor_stop_termina_el_proceso_y_libera_el_canal() {
 }
 
 #[test]
+fn un_cliente_silencioso_no_bloquea_el_status() {
+    let data = tempfile::tempdir().unwrap();
+    let _guard = Guard {
+        data: data.path().to_path_buf(),
+    };
+    let _ = run(data.path(), ["supervisor", "start"]);
+    let layout = Layout::from_dir(data.path());
+    let idle = connect_raw(&layout).unwrap();
+    let status = std::thread::spawn({
+        let layout = layout.clone();
+        move || Client::status(&layout)
+    });
+    let got = status
+        .join()
+        .unwrap()
+        .expect("status debe responder aunque haya un cliente idle");
+    assert!(got.running);
+    drop(idle);
+}
+
+#[test]
+fn varios_clientes_status_a_la_vez_obtienen_respuesta() {
+    let data = tempfile::tempdir().unwrap();
+    let _guard = Guard {
+        data: data.path().to_path_buf(),
+    };
+    let started = run(data.path(), ["supervisor", "start"]);
+    let pid = started["pid"].as_u64().unwrap() as u32;
+    let layout = Layout::from_dir(data.path());
+    let mut handles = Vec::new();
+    for _ in 0..8 {
+        let layout = layout.clone();
+        handles.push(std::thread::spawn(move || Client::status(&layout).unwrap()));
+    }
+    for handle in handles {
+        let status = handle.join().unwrap();
+        assert!(status.running);
+        assert_eq!(status.pid, pid);
+    }
+}
+
+#[test]
 fn cerrar_un_cliente_no_afecta_al_supervisor() {
     let data = tempfile::tempdir().unwrap();
     let _guard = Guard {

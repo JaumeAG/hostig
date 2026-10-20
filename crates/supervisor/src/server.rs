@@ -1,14 +1,22 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::io::Read;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 
 use hostig_ipc::{
-    error_response, listen, load_or_create_token, protocol_success, read_frame, tokens_match,
-    write_frame, ByteStream, FrameError, Layout, Listener, MAX_FRAME_LEN, PROTOCOL_VERSION,
+    connect_raw, error_response, listen, load_or_create_token, protocol_success, read_frame,
+    tokens_match, write_frame, ByteStream, FrameError, Layout, Listener, MAX_FRAME_LEN,
+    PROTOCOL_VERSION,
 };
 use serde_json::{json, Value};
 
 use crate::lock::Lock;
 use crate::log::Logger;
+
+/// Tiempo máximo de inactividad por conexión (mensaje o cierre).
+const SESSION_IDLE: Duration = Duration::from_secs(5);
+/// Tope de sesiones concurrentes para no agotar hilos.
+const MAX_SESSIONS: usize = 32;
 
 pub fn serve(layout: &Layout, log: &Logger, _lock: Lock) -> std::io::Result<()> {
     let token = load_or_create_token(&layout.token_path)?;
@@ -19,7 +27,9 @@ pub fn serve(layout: &Layout, log: &Logger, _lock: Lock) -> std::io::Result<()> 
         &format!("supervisor en marcha, pid {}", std::process::id()),
     );
     let shutdown = Arc::new(AtomicBool::new(false));
-    let result = accept_loop(&listener, &token, log, &shutdown);
+    let active = Arc::new(AtomicUsize::new(0));
+    let result = accept_loop(&listener, layout, &token, log, &shutdown, &active);
+    wait_for_sessions(&active, Duration::from_secs(6));
     let _ = std::fs::remove_file(&layout.pid_path);
     if let hostig_ipc::Endpoint::Unix(path) = &layout.endpoint {
         let _ = std::fs::remove_file(path);
@@ -30,10 +40,14 @@ pub fn serve(layout: &Layout, log: &Logger, _lock: Lock) -> std::io::Result<()> 
 
 fn accept_loop(
     listener: &Listener,
+    layout: &Layout,
     token: &str,
     log: &Logger,
     shutdown: &Arc<AtomicBool>,
+    active: &Arc<AtomicUsize>,
 ) -> std::io::Result<()> {
+    let token = Arc::new(token.to_string());
+    let log = log.clone();
     loop {
         if shutdown.load(Ordering::SeqCst) {
             return Ok(());
@@ -51,33 +65,68 @@ fn accept_loop(
             );
             continue;
         }
-        if let Err(error) = session(accepted.stream, token, log, shutdown) {
+        if active.load(Ordering::SeqCst) >= MAX_SESSIONS {
             log.error(
                 "ipc",
-                "la sesión terminó con error",
-                &error.to_string(),
-                "el supervisor sigue en marcha; reintenta la conexión",
+                "conexión rechazada",
+                "hay demasiadas conexiones simultáneas",
+                "espera a que terminen otras peticiones o reinicia el supervisor",
             );
+            continue;
         }
+        let stream = accepted.stream;
+        let token = Arc::clone(&token);
+        let log = log.clone();
+        let shutdown = Arc::clone(shutdown);
+        let active = Arc::clone(active);
+        let wake_layout = layout.clone();
+        active.fetch_add(1, Ordering::SeqCst);
+        std::thread::spawn(move || {
+            let outcome = session(stream, &token, &log, &shutdown);
+            if shutdown.load(Ordering::SeqCst) {
+                wake_accept(&wake_layout);
+            }
+            if let Err(error) = outcome {
+                if !is_timeout(&error) && !closed(&error) {
+                    log.error(
+                        "ipc",
+                        "la sesión terminó con error",
+                        &error.to_string(),
+                        "el supervisor sigue en marcha; reintenta la conexión",
+                    );
+                }
+            }
+            active.fetch_sub(1, Ordering::SeqCst);
+        });
+    }
+}
+
+fn wake_accept(layout: &Layout) {
+    let _ = connect_raw(layout);
+}
+
+fn wait_for_sessions(active: &AtomicUsize, budget: Duration) {
+    let deadline = std::time::Instant::now() + budget;
+    while active.load(Ordering::SeqCst) > 0 && std::time::Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(20));
     }
 }
 
 /// Una conexión, una llamada. El cliente cierra después de leer la respuesta.
-/// En el named pipe de Windows un segundo mensaje de la misma conexión no llega
-/// a desbloquearse, así que el protocolo de esta fase no encadena llamadas.
 fn session(
     mut stream: Box<dyn ByteStream>,
     token: &str,
     log: &Logger,
     shutdown: &AtomicBool,
 ) -> std::io::Result<()> {
-    let first = match read_frame(&mut stream) {
+    let first = match read_frame_timed(&mut stream, log, "el cliente no envió su mensaje a tiempo")
+    {
         Ok(bytes) => bytes,
         Err(FrameError::TooLarge(len)) => {
             reject_large(&mut stream, log, None, len);
-            return wait_for_close(&mut stream);
+            return wait_for_close_timed(&mut stream, log);
         }
-        Err(FrameError::Io(error)) if closed(&error) => return Ok(()),
+        Err(FrameError::Io(error)) if is_timeout(&error) || closed(&error) => return Ok(()),
         Err(FrameError::Io(error)) => return Err(error),
     };
     let request = parse(&first)?;
@@ -100,7 +149,7 @@ fn session(
             &cause,
             action,
         )?;
-        return wait_for_close(&mut stream);
+        return wait_for_close_timed(&mut stream, log);
     }
     let got = request
         .pointer("/params/token")
@@ -111,7 +160,7 @@ fn session(
         let action = "borra el testigo que guardó el cliente y vuelve a conectar";
         log.error("ipc", "handshake rechazado", cause, action);
         reply_error(&mut stream, id, -32001, "testigo rechazado", cause, action)?;
-        return wait_for_close(&mut stream);
+        return wait_for_close_timed(&mut stream, log);
     }
     match request_method(&request) {
         "handshake" => {
@@ -146,15 +195,89 @@ fn session(
             )?;
         }
     }
-    wait_for_close(&mut stream)
+    wait_for_close_timed(&mut stream, log)
 }
 
-fn wait_for_close<R: std::io::Read + ?Sized>(stream: &mut R) -> std::io::Result<()> {
+fn read_frame_timed(
+    stream: &mut Box<dyn ByteStream>,
+    log: &Logger,
+    cause: &str,
+) -> Result<Vec<u8>, FrameError> {
+    match with_idle_timeout(stream, |s| read_frame(s)) {
+        Ok(result) => result,
+        Err(()) => {
+            log.error(
+                "ipc",
+                "conexión cerrada por inactividad",
+                cause,
+                "envía el mensaje o cierra la conexión; el supervisor sigue atendiendo",
+            );
+            Err(FrameError::Io(std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                cause,
+            )))
+        }
+    }
+}
+
+fn wait_for_close_timed(stream: &mut Box<dyn ByteStream>, log: &Logger) -> std::io::Result<()> {
+    match with_idle_timeout(stream, |s| wait_for_close(s)) {
+        Ok(result) => result,
+        Err(()) => {
+            log.error(
+                "ipc",
+                "conexión cerrada por inactividad",
+                "el cliente no cerró la conexión a tiempo",
+                "cierra el cliente tras leer la respuesta; el supervisor sigue atendiendo",
+            );
+            let _ = stream.interrupt();
+            Ok(())
+        }
+    }
+}
+
+fn with_idle_timeout<T>(
+    stream: &mut Box<dyn ByteStream>,
+    op: impl FnOnce(&mut dyn ByteStream) -> T,
+) -> Result<T, ()> {
+    let abort = match stream.try_clone() {
+        Ok(clone) => Arc::new(std::sync::Mutex::new(Some(clone))),
+        Err(_) => return Ok(op(stream.as_mut())),
+    };
+    let timed_out = Arc::new(AtomicBool::new(false));
+    let abort_t = Arc::clone(&abort);
+    let timed_out_t = Arc::clone(&timed_out);
+    let (cancel_tx, cancel_rx) = std::sync::mpsc::channel::<()>();
+    let timer = std::thread::spawn(move || {
+        if cancel_rx.recv_timeout(SESSION_IDLE).is_ok() {
+            return;
+        }
+        if let Ok(mut guard) = abort_t.lock() {
+            if let Some(mut clone) = guard.take() {
+                let _ = clone.interrupt();
+                timed_out_t.store(true, Ordering::SeqCst);
+            }
+        }
+    });
+    let result = op(stream.as_mut());
+    let _ = cancel_tx.send(());
+    if let Ok(mut guard) = abort.lock() {
+        let _ = guard.take().map(std::mem::forget);
+    }
+    let _ = timer.join();
+    if timed_out.load(Ordering::SeqCst) {
+        Err(())
+    } else {
+        Ok(result)
+    }
+}
+
+fn wait_for_close<R: Read + ?Sized>(stream: &mut R) -> std::io::Result<()> {
     let mut buf = [0u8; 1];
-    match std::io::Read::read(stream, &mut buf) {
+    match stream.read(&mut buf) {
         Ok(0) => Ok(()),
         Ok(_) => Ok(()),
-        Err(error) if closed(&error) => Ok(()),
+        Err(error) if closed(&error) || is_timeout(&error) => Ok(()),
         Err(error) => Err(error),
     }
 }
@@ -163,6 +286,10 @@ fn closed(error: &std::io::Error) -> bool {
     error.kind() == std::io::ErrorKind::UnexpectedEof
         || error.kind() == std::io::ErrorKind::ConnectionReset
         || error.kind() == std::io::ErrorKind::BrokenPipe
+}
+
+fn is_timeout(error: &std::io::Error) -> bool {
+    error.kind() == std::io::ErrorKind::TimedOut || error.kind() == std::io::ErrorKind::WouldBlock
 }
 
 fn reject_large<W: std::io::Write + ?Sized>(

@@ -1,12 +1,15 @@
 [workspace]
 resolver = "2"
 members = [
+    "apps/cli",
     "crates/backup",
     "crates/diagnose",
+    "crates/ipc",
     "crates/ports",
     "crates/processes",
     "crates/projects",
     "crates/runtimes",
+    "crates/supervisor",
 ]
 
 [workspace.package]

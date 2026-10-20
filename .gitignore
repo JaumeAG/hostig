@@ -6,3 +6,6 @@ src-tauri/target/
 *.log
 .DS_Store
 docs/research/
+.cursor/*
+.vscode/
+!.cursor/rules/

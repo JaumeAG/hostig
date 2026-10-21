@@ -689,7 +689,10 @@ mod tests {
         let mut layout = Layout::from_dir(dir.path());
         layout.ensure().unwrap();
         layout.endpoint = crate::paths::Endpoint::Unix(path);
-        let err = listen(&layout).expect_err("listen debe fallar");
+        let err = match listen(&layout) {
+            Ok(_) => panic!("listen debe fallar con ruta demasiado larga"),
+            Err(e) => e,
+        };
         let text = err.to_string();
         assert!(text.contains("máximo") || text.contains("maximo"), "{text}");
         assert!(text.contains("ruta"), "{text}");

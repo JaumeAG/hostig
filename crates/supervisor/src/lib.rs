@@ -52,12 +52,16 @@ pub fn run() -> i32 {
         Ok(Some(lock)) => match server::serve(&layout, &log, lock) {
             Ok(()) => 0,
             Err(error) => {
-                log.error(
-                    "supervisor",
-                    "el supervisor se detuvo",
-                    &error.to_string(),
-                    "mira este log y vuelve a arrancar",
-                );
+                let message = error.to_string();
+                let (cause, action) = if message.contains("ruta del socket mide") {
+                    (
+                        message,
+                        "usa una carpeta de datos con una ruta más corta".to_string(),
+                    )
+                } else {
+                    (message, "mira este log y vuelve a arrancar".to_string())
+                };
+                log.error("supervisor", "el supervisor se detuvo", &cause, &action);
                 1
             }
         },

@@ -204,8 +204,8 @@ fn read_frame_timed(
     cause: &str,
 ) -> Result<Vec<u8>, FrameError> {
     match with_idle_timeout(stream, |s| read_frame(s)) {
-        Ok(result) => result,
-        Err(()) => {
+        IdleOutcome::Done(result) => result,
+        IdleOutcome::TimedOut => {
             log.error(
                 "ipc",
                 "conexión cerrada por inactividad",
@@ -217,13 +217,23 @@ fn read_frame_timed(
                 cause,
             )))
         }
+        IdleOutcome::CloneFailed(error) => {
+            log.error(
+                "ipc",
+                "conexión cerrada",
+                &format!("no se pudo clonar el descriptor para aplicar el timeout: {error}"),
+                "libera descriptores o reduce la carga; el supervisor sigue atendiendo",
+            );
+            let _ = stream.interrupt();
+            Err(FrameError::Io(error))
+        }
     }
 }
 
 fn wait_for_close_timed(stream: &mut Box<dyn ByteStream>, log: &Logger) -> std::io::Result<()> {
     match with_idle_timeout(stream, |s| wait_for_close(s)) {
-        Ok(result) => result,
-        Err(()) => {
+        IdleOutcome::Done(result) => result,
+        IdleOutcome::TimedOut => {
             log.error(
                 "ipc",
                 "conexión cerrada por inactividad",
@@ -233,16 +243,32 @@ fn wait_for_close_timed(stream: &mut Box<dyn ByteStream>, log: &Logger) -> std::
             let _ = stream.interrupt();
             Ok(())
         }
+        IdleOutcome::CloneFailed(error) => {
+            log.error(
+                "ipc",
+                "conexión cerrada",
+                &format!("no se pudo clonar el descriptor para aplicar el timeout: {error}"),
+                "libera descriptores o reduce la carga; el supervisor sigue atendiendo",
+            );
+            let _ = stream.interrupt();
+            Err(error)
+        }
     }
+}
+
+enum IdleOutcome<T> {
+    Done(T),
+    TimedOut,
+    CloneFailed(std::io::Error),
 }
 
 fn with_idle_timeout<T>(
     stream: &mut Box<dyn ByteStream>,
     op: impl FnOnce(&mut dyn ByteStream) -> T,
-) -> Result<T, ()> {
+) -> IdleOutcome<T> {
     let abort = match stream.try_clone() {
         Ok(clone) => Arc::new(std::sync::Mutex::new(Some(clone))),
-        Err(_) => return Ok(op(stream.as_mut())),
+        Err(error) => return IdleOutcome::CloneFailed(error),
     };
     let timed_out = Arc::new(AtomicBool::new(false));
     let abort_t = Arc::clone(&abort);
@@ -256,19 +282,22 @@ fn with_idle_timeout<T>(
             if let Some(mut clone) = guard.take() {
                 let _ = clone.interrupt();
                 timed_out_t.store(true, Ordering::SeqCst);
+                // Drop cierra el handle duplicado sin DisconnectNamedPipe en Windows.
+                drop(clone);
             }
         }
     });
     let result = op(stream.as_mut());
     let _ = cancel_tx.send(());
     if let Ok(mut guard) = abort.lock() {
-        let _ = guard.take().map(std::mem::forget);
+        // Cierra la copia: CloseHandle / close(2), sin olvidar el descriptor.
+        drop(guard.take());
     }
     let _ = timer.join();
     if timed_out.load(Ordering::SeqCst) {
-        Err(())
+        IdleOutcome::TimedOut
     } else {
-        Ok(result)
+        IdleOutcome::Done(result)
     }
 }
 

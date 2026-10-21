@@ -1,6 +1,18 @@
 use crate::paths::{Endpoint, Layout};
 use std::io::{Read, Write};
 
+/// Longitud máxima usable de un socket Unix en esta plataforma (sin el NUL).
+#[cfg(unix)]
+pub fn unix_socket_path_max() -> usize {
+    unix::unix_path_max_chars()
+}
+
+/// Error claro si la ruta del socket no cabe en `sockaddr_un`.
+#[cfg(unix)]
+pub fn check_unix_socket_path(path: &std::path::Path) -> std::io::Result<()> {
+    unix::check_unix_path_length(path)
+}
+
 pub trait ByteStream: Read + Write + Send {
     fn try_clone(&self) -> std::io::Result<Box<dyn ByteStream>>;
     /// Desbloquea lecturas pendientes (timeout o apagado).
@@ -139,6 +151,7 @@ mod unix {
     use std::path::Path;
 
     pub fn bind(path: &Path) -> std::io::Result<UnixListener> {
+        check_unix_path_length(path)?;
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
             std::fs::set_permissions(parent, std::fs::Permissions::from_mode(0o700))?;
@@ -156,9 +169,45 @@ mod unix {
                 }
             }
         }
-        let listener = UnixListener::bind(path)?;
+        let listener = UnixListener::bind(path).map_err(|error| map_bind_error(path, error))?;
         std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))?;
         Ok(listener)
+    }
+
+    /// Longitud máxima de `sun_path` sin el byte nulo final.
+    pub fn unix_path_max_chars() -> usize {
+        let blank = unsafe { std::mem::zeroed::<libc::sockaddr_un>() };
+        blank.sun_path.len().saturating_sub(1)
+    }
+
+    pub fn check_unix_path_length(path: &Path) -> std::io::Result<()> {
+        use std::os::unix::ffi::OsStrExt;
+        let bytes = path.as_os_str().as_bytes();
+        let max = unix_path_max_chars();
+        if bytes.len() > max {
+            return Err(path_too_long_error(bytes.len(), max));
+        }
+        Ok(())
+    }
+
+    pub fn path_too_long_error(len: usize, max: usize) -> std::io::Error {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!(
+                "la ruta del socket mide {len} caracteres y el máximo es {max}; \
+                 usa una carpeta de datos con una ruta más corta"
+            ),
+        )
+    }
+
+    fn map_bind_error(path: &Path, error: std::io::Error) -> std::io::Error {
+        use std::os::unix::ffi::OsStrExt;
+        let len = path.as_os_str().as_bytes().len();
+        let max = unix_path_max_chars();
+        if len > max || error.raw_os_error() == Some(libc::ENAMETOOLONG) {
+            return path_too_long_error(len, max);
+        }
+        error
     }
 
     pub fn verify_socket_owner(path: &Path) -> std::io::Result<()> {
@@ -262,8 +311,11 @@ mod windows {
 
     pub struct PipeStream {
         handle: HANDLE,
-        /// Solo el extremo del servidor debe llamar a DisconnectNamedPipe.
-        server: bool,
+        /// Extremo servidor: interrupt() puede DisconnectNamedPipe.
+        server_endpoint: bool,
+        /// Solo el handle primario del accept hace DisconnectNamedPipe en Drop.
+        /// Las copias de timeout solo cierran el handle duplicado.
+        disconnect_on_drop: bool,
     }
 
     unsafe impl Send for PipeStream {}
@@ -285,19 +337,18 @@ mod windows {
                 )
                 .map_err(io_err)?;
             }
-            // Conserva server=true para que interrupt() pueda DisconnectNamedPipe.
             Ok(Box::new(PipeStream {
                 handle: copied,
-                server: self.server,
+                server_endpoint: self.server_endpoint,
+                disconnect_on_drop: false,
             }))
         }
 
         fn interrupt(&mut self) -> std::io::Result<()> {
             unsafe {
-                if self.server {
+                if self.server_endpoint {
                     let _ = DisconnectNamedPipe(self.handle);
                 } else {
-                    // Cancelar I/O pendiente en este handle.
                     use windows::Win32::System::IO::CancelIoEx;
                     let _ = CancelIoEx(self.handle, None);
                 }
@@ -309,7 +360,7 @@ mod windows {
     impl Drop for PipeStream {
         fn drop(&mut self) {
             unsafe {
-                if self.server {
+                if self.disconnect_on_drop {
                     let _ = DisconnectNamedPipe(self.handle);
                 }
                 let _ = CloseHandle(self.handle);
@@ -408,7 +459,8 @@ mod windows {
         Ok(Accepted {
             stream: Box::new(PipeStream {
                 handle,
-                server: true,
+                server_endpoint: true,
+                disconnect_on_drop: true,
             }),
             same_user,
         })
@@ -433,7 +485,8 @@ mod windows {
                 Ok(handle) => {
                     return Ok(PipeStream {
                         handle,
-                        server: false,
+                        server_endpoint: false,
+                        disconnect_on_drop: false,
                     })
                 }
                 Err(error) if error.code() == ERROR_PIPE_BUSY.into() => {
@@ -610,5 +663,38 @@ mod tests {
             Err(error) => error,
         };
         assert_eq!(err.kind(), std::io::ErrorKind::AddrInUse);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn una_ruta_de_socket_demasiado_larga_explica_causa_y_accion() {
+        use super::{check_unix_socket_path, unix_socket_path_max};
+        use std::os::unix::ffi::OsStrExt;
+        use std::path::PathBuf;
+
+        let max = unix_socket_path_max();
+        let path = PathBuf::from("x".repeat(max + 1));
+        let len = path.as_os_str().as_bytes().len();
+        assert!(len > max);
+        let error = check_unix_socket_path(&path).expect_err("debe rechazar la ruta");
+        let text = error.to_string();
+        assert!(text.contains(&len.to_string()), "{text}");
+        assert!(text.contains(&max.to_string()), "{text}");
+        assert!(
+            text.contains("ruta más corta") || text.contains("ruta mas corta"),
+            "{text}"
+        );
+
+        let dir = tempfile::tempdir().unwrap();
+        let mut layout = Layout::from_dir(dir.path());
+        layout.ensure().unwrap();
+        layout.endpoint = crate::paths::Endpoint::Unix(path);
+        let err = match listen(&layout) {
+            Ok(_) => panic!("listen debe fallar con ruta demasiado larga"),
+            Err(e) => e,
+        };
+        let text = err.to_string();
+        assert!(text.contains("máximo") || text.contains("maximo"), "{text}");
+        assert!(text.contains("ruta"), "{text}");
     }
 }

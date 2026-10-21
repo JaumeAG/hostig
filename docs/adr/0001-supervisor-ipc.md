@@ -29,11 +29,11 @@ Un socket de flujo, solo local, con la misma semántica en las tres plataformas:
 |---|---|---|
 | Linux | Socket de dominio Unix | `$XDG_RUNTIME_DIR/hostig/supervisor.sock`, o `/run/user/$UID/hostig/supervisor.sock` si `XDG_RUNTIME_DIR` no existe |
 | macOS | Socket de dominio Unix | `~/Library/Application Support/Hostig/run/supervisor.sock` |
-| Windows | Named pipe | \\\.\pipe\hostig\<SID>\supervisor\ |
+| Windows | Named pipe | `\\.\pipe\hostig\<SID>\supervisor` |
 
 El directorio del socket queda en modo `0700` y el socket en `0600`. En Windows la DACL del pipe concede acceso al usuario actual y a SYSTEM, y a nadie más.
 
-El nombre del pipe incluye el SID del usuario (\\\.\pipe\hostig\<SID>\supervisor\) para que dos cuentas del mismo equipo no compartan canal. La primera instancia se crea con \FILE_FLAG_FIRST_PIPE_INSTANCE\; si otro proceso ya ocupa ese nombre, el arranque falla. El cliente, antes de enviar el testigo, comprueba con \GetNamedPipeServerProcessId\ que el servidor pertenece al mismo usuario. En Unix se comprueba que el socket y su directorio pertenecen al uid efectivo.
+El nombre del pipe incluye el SID del usuario (`\\.\pipe\hostig\<SID>\supervisor`) para que dos cuentas del mismo equipo no compartan canal. La primera instancia se crea con `FILE_FLAG_FIRST_PIPE_INSTANCE`; si otro proceso ya ocupa ese nombre, el arranque falla. El cliente, antes de enviar el testigo, comprueba con `GetNamedPipeServerProcessId` que el servidor pertenece al mismo usuario. En Unix se comprueba que el socket y su directorio pertenecen al uid efectivo.
 
 Cada conexión se atiende en un hilo propio, con un tope de sesiones concurrentes. Si el cliente no envía el mensaje o no cierra la conexión en 5 segundos, el supervisor corta la sesión, registra causa y acción, y sigue escuchando.
 

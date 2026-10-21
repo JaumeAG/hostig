@@ -22,6 +22,69 @@ pub fn process_is_running(pid: u32) -> bool {
     }
 }
 
+/// Descriptores (Unix) o handles (Windows) abiertos por el proceso.
+pub fn process_open_resources(pid: u32) -> std::io::Result<u32> {
+    #[cfg(target_os = "linux")]
+    {
+        let dir = std::fs::read_dir(format!("/proc/{pid}/fd"))?;
+        Ok(dir.count() as u32)
+    }
+    #[cfg(target_os = "macos")]
+    {
+        macos_fd_count(pid)
+    }
+    #[cfg(windows)]
+    {
+        use windows::Win32::Foundation::CloseHandle;
+        use windows::Win32::System::Threading::{
+            GetProcessHandleCount, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+        };
+        unsafe {
+            let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)
+                .map_err(|error| std::io::Error::other(error.to_string()))?;
+            let mut count = 0u32;
+            let result = GetProcessHandleCount(handle, &mut count);
+            let _ = CloseHandle(handle);
+            result.map_err(|error| std::io::Error::other(error.to_string()))?;
+            Ok(count)
+        }
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
+    {
+        let _ = pid;
+        Err(std::io::Error::other(
+            "conteo de recursos no disponible en este sistema",
+        ))
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn macos_fd_count(pid: u32) -> std::io::Result<u32> {
+    // PROC_PIDLISTFDS = 1; cada entrada mide 8 bytes (proc_fdinfo).
+    const PROC_PIDLISTFDS: i32 = 1;
+    const FDINFO_SIZE: usize = 8;
+    let mut buf = vec![0u8; 16 * 1024];
+    loop {
+        let written = unsafe {
+            libc::proc_pidinfo(
+                pid as i32,
+                PROC_PIDLISTFDS,
+                0,
+                buf.as_mut_ptr().cast(),
+                buf.len() as i32,
+            )
+        };
+        if written <= 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        let written = written as usize;
+        if written < buf.len() {
+            return Ok((written / FDINFO_SIZE) as u32);
+        }
+        buf.resize(buf.len() * 2, 0);
+    }
+}
+
 #[cfg(windows)]
 pub fn restrict_to_user_and_system(path: &std::path::Path) -> std::io::Result<()> {
     use std::os::windows::ffi::OsStrExt;

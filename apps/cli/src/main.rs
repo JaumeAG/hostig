@@ -63,6 +63,9 @@ fn start() -> i32 {
         Ok(layout) => layout,
         Err(error) => return fail(&error.to_string(), "revisa HOSTIG_DATA_DIR"),
     };
+    if let Err(error) = check_endpoint_path(&layout) {
+        return error;
+    }
     if let Ok(state) = Client::status(&layout) {
         print_state(&state_json(
             state.running,
@@ -203,6 +206,29 @@ fn fail(cause: &str, action: &str) -> i32 {
     });
     eprintln!("{line}");
     1
+}
+
+fn check_endpoint_path(layout: &Layout) -> Result<(), i32> {
+    #[cfg(unix)]
+    {
+        use hostig_ipc::Endpoint;
+        use std::os::unix::ffi::OsStrExt;
+        if let Endpoint::Unix(path) = &layout.endpoint {
+            if hostig_ipc::check_unix_socket_path(path).is_err() {
+                let len = path.as_os_str().as_bytes().len();
+                let max = hostig_ipc::unix_socket_path_max();
+                return Err(fail(
+                    &format!("la ruta del socket mide {len} caracteres y el máximo es {max}"),
+                    "usar una carpeta de datos con una ruta más corta",
+                ));
+            }
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = layout;
+    }
+    Ok(())
 }
 
 fn supervisor_bin() -> std::io::Result<PathBuf> {

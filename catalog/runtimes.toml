@@ -1,0 +1,45 @@
+# Catálogo fijado de runtimes (ADR 0002). Cambiar URL o hash es un commit revisado.
+# Los SHA-256 de Windows x64 se contrastaron el 2026-10-21 contra el publicador:
+# - Apache: .txt SHA-256 de Apache Lounge + archivo descargado
+# - PHP: releases.json de windows.php.net + archivo descargado
+# - MariaDB: sha256sums.txt de archive.mariadb.org + archivo descargado
+
+[[runtime]]
+component = "apache"
+version = "2.4.66"
+os = "windows"
+arch = "x86_64"
+urls = [
+  "https://www.apachelounge.com/download/VS17/binaries/httpd-2.4.66-251206-win64-VS17.zip",
+]
+filename = "httpd-2.4.66-251206-win64-VS17.zip"
+sha256 = "2cd1f349b6705e43e784e876a233eeb1a859fa6b8abc693a91f87b35a368f7f9"
+license = "Apache-2.0"
+notes = "ZIP Win64 de Apache Lounge (VS17), no binario de la ASF. Visual C++ 2015-2022 redistribuible en la carpeta del runtime si el ZIP no trae las DLL."
+
+[[runtime]]
+component = "php"
+version = "8.3.36"
+os = "windows"
+arch = "x86_64"
+urls = [
+  "https://windows.php.net/downloads/releases/php-8.3.36-nts-Win32-vs16-x64.zip",
+  "https://windows.php.net/downloads/releases/archives/php-8.3.36-nts-Win32-vs16-x64.zip",
+]
+filename = "php-8.3.36-nts-Win32-vs16-x64.zip"
+sha256 = "3c9242622c7402b47c38d2ec2ed779cef3a290fd6f2bde6c35f9c482699e7900"
+license = "PHP-3.01"
+notes = "ZIP NTS x64 oficial (VS16). Pensado para FastCGI (php-cgi), no mod_php."
+
+[[runtime]]
+component = "mariadb"
+version = "11.4.5"
+os = "windows"
+arch = "x86_64"
+urls = [
+  "https://archive.mariadb.org/mariadb-11.4.5/winx64-packages/mariadb-11.4.5-winx64.zip",
+]
+filename = "mariadb-11.4.5-winx64.zip"
+sha256 = "b7c11d38657f16b837e68199d73670510aadb78f42dfa5d5fdea31a7aab342e3"
+license = "GPL-2.0-only"
+notes = "ZIP winx64 oficial de mariadb.org. No usar el MSI (registra servicio de Windows)."

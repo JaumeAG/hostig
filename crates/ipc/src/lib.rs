@@ -21,6 +21,9 @@ pub use protocol::{
 pub use token::{load_or_create_token, tokens_match};
 pub use transport::{connect as connect_raw, listen, Accepted, ByteStream, Listener};
 
+#[cfg(unix)]
+pub use transport::{check_unix_socket_path, unix_socket_path_max};
+
 #[derive(Debug)]
 pub enum ClientError {
     Io(std::io::Error),
@@ -133,4 +136,9 @@ fn check_success(raw: &[u8]) -> Result<(), ClientError> {
 /// `true` si el pid sigue en marcha. Un pid 0 no lo está.
 pub fn process_is_running(pid: u32) -> bool {
     peer::process_is_running(pid)
+}
+
+/// Descriptores o handles abiertos del proceso (para tests de fuga).
+pub fn process_open_resources(pid: u32) -> std::io::Result<u32> {
+    peer::process_open_resources(pid)
 }

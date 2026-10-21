@@ -3,7 +3,8 @@ use std::path::Path;
 use std::process::Command;
 
 use hostig_ipc::{
-    connect_raw, process_is_running, read_frame, Client, ClientError, Layout, MAX_FRAME_LEN,
+    connect_raw, process_is_running, process_open_resources, read_frame, Client, ClientError,
+    Layout, MAX_FRAME_LEN,
 };
 use serde_json::Value;
 
@@ -195,6 +196,75 @@ fn cerrar_un_cliente_no_afecta_al_supervisor() {
     }
     let other = Client::status(&layout).unwrap();
     assert_eq!(other.pid, started["pid"].as_u64().unwrap() as u32);
+}
+
+#[test]
+fn mil_peticiones_status_no_fugan_descriptores() {
+    let data = tempfile::tempdir().unwrap();
+    let _guard = Guard {
+        data: data.path().to_path_buf(),
+    };
+    let started = run(data.path(), ["supervisor", "start"]);
+    let pid = started["pid"].as_u64().unwrap() as u32;
+    let layout = Layout::from_dir(data.path());
+    // Calentamiento: crea las instancias de pipe / hilos estables.
+    for _ in 0..10 {
+        assert!(Client::status(&layout).unwrap().running);
+    }
+    let before = process_open_resources(pid).expect("contar recursos iniciales");
+    for i in 0..1000 {
+        let status = Client::status(&layout).unwrap_or_else(|error| {
+            panic!("status falló en la petición {i}: {error}");
+        });
+        assert!(status.running);
+        assert_eq!(status.pid, pid);
+    }
+    let after = process_open_resources(pid).expect("contar recursos finales");
+    // Margen pequeño: ruido del SO / pool de pipes en espera, no una fuga por petición.
+    const MARGIN: u32 = 32;
+    assert!(
+        after <= before + MARGIN,
+        "fuga de recursos del supervisor: antes={before} después={after} margen={MARGIN}"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn una_ruta_de_socket_demasiado_larga_en_la_cli() {
+    use hostig_ipc::unix_socket_path_max;
+    use std::os::unix::ffi::OsStrExt;
+
+    let max = unix_socket_path_max();
+    let deep = tempfile::tempdir().unwrap();
+    let long_name = "n".repeat(max);
+    let data = deep.path().join(long_name);
+    std::fs::create_dir_all(&data).unwrap();
+    let layout = Layout::from_dir(&data);
+    if let hostig_ipc::Endpoint::Unix(path) = &layout.endpoint {
+        let len = path.as_os_str().as_bytes().len();
+        if len <= max {
+            // En este sistema el tempdir es tan corto que aún cabe: forzamos el chequeo unitario.
+            return;
+        }
+    }
+    let output = hostig(&data)
+        .args(["supervisor", "start"])
+        .output()
+        .unwrap();
+    assert!(
+        !output.status.success(),
+        "start debía fallar con ruta larga"
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("ruta del socket mide"), "{stderr}");
+    assert!(
+        stderr.contains("máximo") || stderr.contains("maximo"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("ruta más corta") || stderr.contains("ruta mas corta"),
+        "{stderr}"
+    );
 }
 
 fn run(data: &Path, args: impl IntoIterator<Item = &'static str>) -> Value {

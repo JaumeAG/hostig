@@ -41,7 +41,7 @@ enum SupervisorCommand {
 enum RuntimesCommand {
     /// Lista las entradas del catálogo y si están instaladas.
     List,
-    /// Instala un runtime. Formato: componente@version (p. ej. php@8.3.36).
+    /// Instala un runtime. Formato: componente@version (p. ej. php@8.4.27).
     Install { spec: String },
     /// Recalcula hashes de lo instalado frente al manifiesto.
     Verify {
@@ -316,13 +316,13 @@ fn parse_spec(spec: &str) -> Result<(&str, &str), i32> {
     let Some((component, version)) = spec.split_once('@') else {
         return Err(fail(
             &format!("especificación inválida: {spec}"),
-            "usa componente@version, por ejemplo php@8.3.36",
+            "usa componente@version, por ejemplo php@8.4.27",
         ));
     };
     if component.is_empty() || version.is_empty() {
         return Err(fail(
             &format!("especificación inválida: {spec}"),
-            "usa componente@version, por ejemplo php@8.3.36",
+            "usa componente@version, por ejemplo php@8.4.27",
         ));
     }
     Ok((component, version))

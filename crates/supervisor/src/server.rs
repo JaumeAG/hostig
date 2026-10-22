@@ -270,7 +270,7 @@ fn handle_runtimes_install(
         return Err((
             "parámetros incompletos".into(),
             "faltan component o version".into(),
-            "usa component@version, por ejemplo php@8.3.36".into(),
+            "usa component@version, por ejemplo php@8.4.27".into(),
         ));
     }
     match runtimes.start_install(component, version) {

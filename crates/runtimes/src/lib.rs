@@ -8,9 +8,12 @@ mod install;
 mod jobs;
 
 pub use catalog::{host_arch, host_os, Catalog, RuntimeEntry, EMBEDDED_CATALOG};
+pub use download::DownloadTimeouts;
 pub use error::{Result, RuntimeError};
-pub use install::{runtime_dir, verify_installed, InstallManifest, MANIFEST_NAME};
-pub use jobs::{JobState, JobStatus, ListedRuntime, RuntimeService, VerifyRow};
+pub use install::{
+    clean_tmp_runtimes, runtime_dir, verify_installed, InstallManifest, MANIFEST_NAME,
+};
+pub use jobs::{JobState, JobStatus, ListedRuntime, RuntimeService, VerifyRow, MAX_FINISHED_JOBS};
 
 /// Comprueba en red que cada URL del catálogo responde y que el SHA-256 coincide.
 /// Pensado para el workflow semanal, no para el CI de cada PR.

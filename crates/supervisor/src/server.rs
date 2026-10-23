@@ -8,7 +8,7 @@ use hostig_ipc::{
     tokens_match, write_frame, ByteStream, FrameError, Layout, Listener, MAX_FRAME_LEN,
     PROTOCOL_VERSION,
 };
-use hostig_runtimes::RuntimeService;
+use hostig_runtimes::{clean_tmp_runtimes, RuntimeService};
 use serde_json::{json, Value};
 
 use crate::lock::Lock;
@@ -22,6 +22,16 @@ const MAX_SESSIONS: usize = 32;
 pub fn serve(layout: &Layout, log: &Logger, _lock: Lock) -> std::io::Result<()> {
     let token = load_or_create_token(&layout.token_path)?;
     std::fs::write(layout.pid_path.as_path(), std::process::id().to_string())?;
+    match clean_tmp_runtimes(&layout.data_dir) {
+        Ok(0) => {}
+        Ok(n) => log.info("runtimes", &format!("limpiados {n} restos en tmp/runtimes")),
+        Err(error) => log.error(
+            "runtimes",
+            "no se pudo limpiar tmp/runtimes",
+            &error.to_string(),
+            "borra a mano {datos}/tmp/runtimes si queda basura de una instalación cortada",
+        ),
+    }
     let runtimes = match RuntimeService::with_embedded(&layout.data_dir) {
         Ok(service) => Arc::new(service),
         Err(error) => {

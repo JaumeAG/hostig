@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
@@ -10,6 +10,9 @@ use uuid::Uuid;
 use crate::catalog::{Catalog, RuntimeEntry};
 use crate::error::{Result, RuntimeError};
 use crate::install::{install_entry, runtime_dir, verify_installed, MANIFEST_NAME};
+
+/// Máximo de trabajos terminados (éxito o fallo) que se conservan en memoria.
+pub const MAX_FINISHED_JOBS: usize = 50;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -42,13 +45,59 @@ struct JobSlot {
     done: Condvar,
 }
 
+struct SharedJobs {
+    jobs: Mutex<HashMap<String, Arc<JobSlot>>>,
+    /// install_key → job_id de la instalación en curso o reciente.
+    inflight: Mutex<HashMap<String, String>>,
+    /// job_id terminados, del más antiguo al más reciente.
+    finished: Mutex<VecDeque<String>>,
+}
+
+impl SharedJobs {
+    fn remember_finished(&self, job_id: &str) {
+        let mut finished = self.finished.lock().expect("finished");
+        finished.push_back(job_id.to_string());
+        while finished.len() > MAX_FINISHED_JOBS {
+            let Some(old) = finished.pop_front() else {
+                break;
+            };
+            drop(finished);
+            self.drop_finished_job(&old);
+            finished = self.finished.lock().expect("finished");
+        }
+    }
+
+    fn drop_finished_job(&self, job_id: &str) {
+        {
+            let mut jobs = self.jobs.lock().expect("jobs");
+            if let Some(slot) = jobs.get(job_id) {
+                let state = slot.status.lock().expect("status").state;
+                if !matches!(state, JobState::Succeeded | JobState::Failed) {
+                    return;
+                }
+            }
+            jobs.remove(job_id);
+        }
+        let mut inflight = self.inflight.lock().expect("inflight");
+        inflight.retain(|_, id| id != job_id);
+    }
+
+    #[cfg(test)]
+    fn finished_len(&self) -> usize {
+        self.finished.lock().expect("finished").len()
+    }
+
+    #[cfg(test)]
+    fn jobs_len(&self) -> usize {
+        self.jobs.lock().expect("jobs").len()
+    }
+}
+
 /// Gestor de instalaciones: deduplica descargas y expone trabajos asíncronos.
 pub struct RuntimeService {
     catalog: Catalog,
     data_dir: PathBuf,
-    jobs: Mutex<HashMap<String, Arc<JobSlot>>>,
-    /// install_key → job_id de la instalación en curso o reciente.
-    inflight: Mutex<HashMap<String, String>>,
+    shared: Arc<SharedJobs>,
 }
 
 impl RuntimeService {
@@ -56,8 +105,11 @@ impl RuntimeService {
         Self {
             catalog,
             data_dir: data_dir.into(),
-            jobs: Mutex::new(HashMap::new()),
-            inflight: Mutex::new(HashMap::new()),
+            shared: Arc::new(SharedJobs {
+                jobs: Mutex::new(HashMap::new()),
+                inflight: Mutex::new(HashMap::new()),
+                finished: Mutex::new(VecDeque::new()),
+            }),
         }
     }
 
@@ -131,9 +183,9 @@ impl RuntimeService {
             });
         }
 
-        let mut inflight = self.inflight.lock().expect("inflight");
+        let mut inflight = self.shared.inflight.lock().expect("inflight");
         if let Some(job_id) = inflight.get(&key).cloned() {
-            let jobs = self.jobs.lock().expect("jobs");
+            let jobs = self.shared.jobs.lock().expect("jobs");
             if let Some(slot) = jobs.get(&job_id) {
                 let status = slot.status.lock().expect("status").clone();
                 if matches!(
@@ -158,7 +210,8 @@ impl RuntimeService {
             status: Mutex::new(status.clone()),
             done: Condvar::new(),
         });
-        self.jobs
+        self.shared
+            .jobs
             .lock()
             .expect("jobs")
             .insert(job_id.clone(), Arc::clone(&slot));
@@ -166,6 +219,8 @@ impl RuntimeService {
         drop(inflight);
 
         let data_dir = self.data_dir.clone();
+        let shared = Arc::clone(&self.shared);
+        let finished_id = job_id.clone();
         thread::spawn(move || {
             {
                 let mut guard = slot.status.lock().expect("status");
@@ -190,6 +245,7 @@ impl RuntimeService {
                     }
                 }
             }
+            shared.remember_finished(&finished_id);
             slot.done.notify_all();
         });
         Ok(status)
@@ -209,7 +265,7 @@ impl RuntimeService {
     fn wait_job(&self, job_id: &str) -> Result<PathBuf> {
         loop {
             let slot = {
-                let jobs = self.jobs.lock().expect("jobs");
+                let jobs = self.shared.jobs.lock().expect("jobs");
                 jobs.get(job_id).cloned()
             };
             let Some(slot) = slot else {
@@ -246,7 +302,7 @@ impl RuntimeService {
 
     pub fn job(&self, job_id: &str) -> Result<JobStatus> {
         let slot = {
-            let jobs = self.jobs.lock().expect("jobs");
+            let jobs = self.shared.jobs.lock().expect("jobs");
             jobs.get(job_id).cloned().ok_or_else(|| {
                 RuntimeError::new(
                     "trabajo desconocido",
@@ -292,6 +348,16 @@ impl RuntimeService {
             }
         }
         Ok(rows)
+    }
+
+    #[cfg(test)]
+    pub fn finished_job_count(&self) -> usize {
+        self.shared.finished_len()
+    }
+
+    #[cfg(test)]
+    pub fn tracked_job_count(&self) -> usize {
+        self.shared.jobs_len()
     }
 }
 

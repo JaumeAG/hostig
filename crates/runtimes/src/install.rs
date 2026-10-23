@@ -11,6 +11,29 @@ use crate::extract::extract_zip;
 
 pub const MANIFEST_NAME: &str = "hostig-install-manifest.json";
 
+/// Borra restos de instalaciones interrumpidas en `{datos}/tmp/runtimes`.
+/// Devuelve cuántas entradas se eliminaron.
+pub fn clean_tmp_runtimes(data_dir: &Path) -> std::io::Result<usize> {
+    let tmp_root = data_dir.join("tmp").join("runtimes");
+    if !tmp_root.exists() {
+        return Ok(0);
+    }
+    let mut removed = 0usize;
+    for entry in fs::read_dir(&tmp_root)? {
+        let entry = entry?;
+        let path = entry.path();
+        let outcome = if path.is_dir() {
+            fs::remove_dir_all(&path)
+        } else {
+            fs::remove_file(&path)
+        };
+        if outcome.is_ok() {
+            removed += 1;
+        }
+    }
+    Ok(removed)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstallManifest {
     pub component: String,

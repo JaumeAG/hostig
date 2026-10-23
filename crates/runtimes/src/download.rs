@@ -1,17 +1,56 @@
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
-use std::time::Duration;
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
 
 use sha2::{Digest, Sha256};
 
 use crate::error::{Result, RuntimeError};
 
+/// Tiempos de la descarga: inactividad entre bytes y tope total.
+#[derive(Debug, Clone, Copy)]
+pub struct DownloadTimeouts {
+    /// Si no llegan bytes en este plazo, se corta.
+    pub idle: Duration,
+    /// Tope absoluto de la descarga (aunque el log avance).
+    pub total: Duration,
+}
+
+impl DownloadTimeouts {
+    pub const DEFAULT_IDLE_SECS: u64 = 60;
+    pub const DEFAULT_TOTAL_SECS: u64 = 2 * 60 * 60;
+
+    /// Defecto: 60 s de inactividad; tope total 2 h o `HOSTIG_DOWNLOAD_TOTAL_SECS`.
+    /// `HOSTIG_DOWNLOAD_IDLE_SECS` ajusta la inactividad.
+    pub fn from_env() -> Self {
+        let idle = env_secs("HOSTIG_DOWNLOAD_IDLE_SECS", Self::DEFAULT_IDLE_SECS);
+        let total = env_secs("HOSTIG_DOWNLOAD_TOTAL_SECS", Self::DEFAULT_TOTAL_SECS);
+        Self {
+            idle: Duration::from_secs(idle.max(1)),
+            total: Duration::from_secs(total.max(idle.max(1))),
+        }
+    }
+}
+
+fn env_secs(name: &str, default: u64) -> u64 {
+    std::env::var(name)
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(default)
+}
+
 /// Descarga `url` a `dest`, calculando SHA-256 al vuelo.
 /// Respeta `HTTPS_PROXY` / `HTTP_PROXY` / `NO_PROXY` (reqwest) y usa TLS del sistema.
 pub fn download_to_file(url: &str, dest: &Path) -> Result<String> {
+    download_to_file_with(url, dest, DownloadTimeouts::from_env())
+}
+
+pub fn download_to_file_with(url: &str, dest: &Path, timeouts: DownloadTimeouts) -> Result<String> {
     let client = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(600))
+        // Sin tope único de reqwest: lo controlamos nosotros (idle + total).
+        .timeout(None)
         .connect_timeout(Duration::from_secs(30))
         .build()
         .map_err(|error| {
@@ -43,21 +82,72 @@ pub fn download_to_file(url: &str, dest: &Path) -> Result<String> {
     }
     let mut file = File::create(dest)?;
     let mut hasher = Sha256::new();
-    let mut buffer = [0u8; 64 * 1024];
-    loop {
-        let read = response.read(&mut buffer).map_err(|error| {
-            RuntimeError::new(
-                "descarga interrumpida",
-                format!("{url}: {error}"),
-                "vuelve a descargar; el temporal se descartará",
-            )
-        })?;
-        if read == 0 {
-            break;
+    let started = Instant::now();
+
+    // El lector bloqueante vive en otro hilo y avisa por cada chunk; aquí
+    // aplicamos idle (sin bytes) y tope total.
+    let (tx, rx) = mpsc::channel::<std::io::Result<Option<Vec<u8>>>>();
+    let url_for_thread = url.to_string();
+    let reader = thread::spawn(move || {
+        let mut buffer = [0u8; 64 * 1024];
+        loop {
+            match response.read(&mut buffer) {
+                Ok(0) => {
+                    let _ = tx.send(Ok(None));
+                    break;
+                }
+                Ok(n) => {
+                    if tx.send(Ok(Some(buffer[..n].to_vec()))).is_err() {
+                        break;
+                    }
+                }
+                Err(error) => {
+                    let _ = tx.send(Err(error));
+                    break;
+                }
+            }
         }
-        file.write_all(&buffer[..read])?;
-        hasher.update(&buffer[..read]);
+        let _ = url_for_thread;
+    });
+
+    loop {
+        if started.elapsed() > timeouts.total {
+            return Err(RuntimeError::new(
+                "descarga agotó el tope total",
+                format!("{url}: superó {} s", timeouts.total.as_secs()),
+                "reintenta con mejor red o sube HOSTIG_DOWNLOAD_TOTAL_SECS",
+            ));
+        }
+        match rx.recv_timeout(timeouts.idle) {
+            Ok(Ok(None)) => break,
+            Ok(Ok(Some(chunk))) => {
+                file.write_all(&chunk)?;
+                hasher.update(&chunk);
+            }
+            Ok(Err(error)) => {
+                return Err(RuntimeError::new(
+                    "descarga interrumpida",
+                    format!("{url}: {error}"),
+                    "vuelve a descargar; el temporal se descartará",
+                ));
+            }
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                return Err(RuntimeError::new(
+                    "descarga sin progreso",
+                    format!("{url}: no llegaron bytes en {} s", timeouts.idle.as_secs()),
+                    "comprueba la red o reintenta; el temporal se descartará",
+                ));
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err(RuntimeError::new(
+                    "descarga interrumpida",
+                    format!("{url}: el lector terminó sin aviso"),
+                    "vuelve a descargar; el temporal se descartará",
+                ));
+            }
+        }
     }
+    let _ = reader.join();
     file.flush()?;
     Ok(hex::encode(hasher.finalize()))
 }

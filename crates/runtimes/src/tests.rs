@@ -387,10 +387,24 @@ fn descarga_detenida_corta_por_inactividad() {
         idle: Duration::from_millis(300),
         total: Duration::from_secs(30),
     };
+    let started = std::time::Instant::now();
     let err = download_to_file_with(&url, &dest, timeouts).unwrap_err();
+    let elapsed = started.elapsed();
     assert!(
-        err.message.contains("progreso") || err.cause.contains("no llegaron bytes"),
+        err.message.contains("progreso")
+            || err.cause.contains("no llegaron bytes")
+            || err.message.contains("interrumpida"),
         "{err}"
+    );
+    assert!(
+        !err.cause.contains("hilo lector no terminó"),
+        "el hilo lector debería haber terminado tras el corte: {err}"
+    );
+    // `download_to_file_with` solo vuelve tras join del lector; con timeout=idle
+    // en el cliente, el join acaba poco después del corte (no queda en read eterno).
+    assert!(
+        elapsed < timeouts.idle.saturating_mul(4) + Duration::from_millis(500),
+        "el corte tardó {elapsed:?}; el hilo lector debería terminar pronto"
     );
 }
 

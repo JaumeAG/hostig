@@ -48,9 +48,11 @@ pub fn download_to_file(url: &str, dest: &Path) -> Result<String> {
 }
 
 pub fn download_to_file_with(url: &str, dest: &Path, timeouts: DownloadTimeouts) -> Result<String> {
+    // En el cliente blocking, `timeout` acota cada operación de lectura del cuerpo
+    // (no hay `read_timeout`). Igualarlo a idle desbloquea `response.read` si el
+    // flujo se atasca; el tope total lo aplicamos nosotros en el bucle.
     let client = reqwest::blocking::Client::builder()
-        // Sin tope único de reqwest: lo controlamos nosotros (idle + total).
-        .timeout(None)
+        .timeout(timeouts.idle)
         .connect_timeout(Duration::from_secs(30))
         .build()
         .map_err(|error| {
@@ -85,9 +87,8 @@ pub fn download_to_file_with(url: &str, dest: &Path, timeouts: DownloadTimeouts)
     let started = Instant::now();
 
     // El lector bloqueante vive en otro hilo y avisa por cada chunk; aquí
-    // aplicamos idle (sin bytes) y tope total.
+    // aplicamos idle (sin bytes) y tope total. Al cortar, siempre hacemos join.
     let (tx, rx) = mpsc::channel::<std::io::Result<Option<Vec<u8>>>>();
-    let url_for_thread = url.to_string();
     let reader = thread::spawn(move || {
         let mut buffer = [0u8; 64 * 1024];
         loop {
@@ -107,49 +108,78 @@ pub fn download_to_file_with(url: &str, dest: &Path, timeouts: DownloadTimeouts)
                 }
             }
         }
-        let _ = url_for_thread;
+        // Drop de `response` cierra la conexión.
     });
 
-    loop {
+    let outcome = loop {
         if started.elapsed() > timeouts.total {
-            return Err(RuntimeError::new(
+            break Err(RuntimeError::new(
                 "descarga agotó el tope total",
                 format!("{url}: superó {} s", timeouts.total.as_secs()),
                 "reintenta con mejor red o sube HOSTIG_DOWNLOAD_TOTAL_SECS",
             ));
         }
         match rx.recv_timeout(timeouts.idle) {
-            Ok(Ok(None)) => break,
+            Ok(Ok(None)) => break Ok(()),
             Ok(Ok(Some(chunk))) => {
-                file.write_all(&chunk)?;
+                if let Err(error) = file.write_all(&chunk) {
+                    break Err(RuntimeError::from(error));
+                }
                 hasher.update(&chunk);
             }
             Ok(Err(error)) => {
-                return Err(RuntimeError::new(
+                break Err(RuntimeError::new(
                     "descarga interrumpida",
                     format!("{url}: {error}"),
                     "vuelve a descargar; el temporal se descartará",
                 ));
             }
             Err(mpsc::RecvTimeoutError::Timeout) => {
-                return Err(RuntimeError::new(
+                // El `timeout`(=idle) del cliente desbloquea el `read` colgado;
+                // el join más abajo espera a que el hilo termine.
+                break Err(RuntimeError::new(
                     "descarga sin progreso",
                     format!("{url}: no llegaron bytes en {} s", timeouts.idle.as_secs()),
                     "comprueba la red o reintenta; el temporal se descartará",
                 ));
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
-                return Err(RuntimeError::new(
+                break Err(RuntimeError::new(
                     "descarga interrumpida",
                     format!("{url}: el lector terminó sin aviso"),
                     "vuelve a descargar; el temporal se descartará",
                 ));
             }
         }
+    };
+
+    // El join no debe colgarse: cada read está acotado al idle del cliente.
+    let joined = join_reader_soon(reader, timeouts.idle.saturating_mul(2));
+    if !joined {
+        return Err(RuntimeError::new(
+            "descarga interrumpida",
+            format!("{url}: el hilo lector no terminó tras el corte"),
+            "reintenta; si persiste, revisa la red o el proxy",
+        ));
     }
-    let _ = reader.join();
-    file.flush()?;
-    Ok(hex::encode(hasher.finalize()))
+
+    match outcome {
+        Ok(()) => {
+            file.flush()?;
+            Ok(hex::encode(hasher.finalize()))
+        }
+        Err(error) => Err(error),
+    }
+}
+
+/// Espera al hilo lector como máximo `budget`. Devuelve si terminó a tiempo.
+fn join_reader_soon(reader: thread::JoinHandle<()>, budget: Duration) -> bool {
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        let _ = reader.join();
+        let _ = tx.send(());
+    });
+    rx.recv_timeout(budget).is_ok()
 }
 
 pub fn sha256_file(path: &Path) -> Result<String> {
